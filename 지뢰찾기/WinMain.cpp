@@ -19,7 +19,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance
 	MSG Message;
 	WNDCLASS WndClass;
 	g_hInst=hInstance;
-	HACCEL hAcc;
+
 	AdjustWindowRect( &rt, WS_OVERLAPPEDWINDOW, false );
 
 	WndClass.cbClsExtra=0;
@@ -53,13 +53,13 @@ struct grid
 {
 	int statue;
 	int num;
-	BOOL mine;
-	BOOL flag;
-	BOOL balank;
-	BOOL error;
-	BOOL temp;
-	BOOL boom;
-	BOOL mouse;
+	bool mine;
+	bool flag;
+	bool balank;
+	bool error;
+	bool temp;
+	bool boom;
+	bool mouse;
 };
 int x[8]={-1, 0, 1, -1, 1, -1, 0, 1};
 int y[8]={-1, -1, -1, 0, 0, 1, 1, 1};
@@ -283,7 +283,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 	static HBITMAP tile, Btile, one, two, three, four, five, six, seven, eight, MINE, flag, failflag, boom, timer, nmine, smile, smile2, mouse;
 	int t_num=0, f_num=0;
 	static int level=1, temp=0, mine_num=0, mx, my,time=0, check=0;
-	static BOOL statue, select;
+	static bool statue, select;
 	static char buf[4], buf2[2];
 	PAINTSTRUCT ps; 
 
@@ -448,6 +448,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		mem1dc = CreateCompatibleDC(hdc);
 		oldBit1 = (HBITMAP)SelectObject(mem1dc, hBit1);
 		BitBlt(hdc, 0, 0, rectView.right, rectView.bottom, mem1dc, 0, 0, SRCCOPY);
+		
 		itoa(time, buf, 10);
 		itoa(mine_num, buf2, 10);
 		SetBkMode(hdc, TRANSPARENT);

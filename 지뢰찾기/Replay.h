@@ -43,5 +43,8 @@ public:
 	int getLevel() const { return level; }
 	vector<pair<int, int>> getMine() const { return mine; }
 	vector<Data> getInput() const { return v; }
+
+	void fileOpen();
+	void fileSave();
 };
 

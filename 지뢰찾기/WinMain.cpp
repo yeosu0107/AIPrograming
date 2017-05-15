@@ -66,7 +66,7 @@ int y[8]={-1, -1, -1, 0, 0, 1, 1, 1};
 int Xnum, Ynum, mine;
 grid map[30][16];
 
-enum gameType {nowPlay, nowReplay};
+enum gameType {nowPlay=0, nowReplay};
 
 //게임 플레이 관련
 void CreateMap()
@@ -287,7 +287,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 	static char buf[4], buf2[2];
 	PAINTSTRUCT ps; 
 
-	
+	static int type;
 
 	switch(iMsg)
 	{
@@ -317,8 +317,9 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		smile = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP19));
 		smile2 = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP20));
 		mouse = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP21));
-
-		SetLevel(level, hwnd, time, mine_num, gameType::nowPlay);
+		type = gameType::nowPlay;
+		
+		SetLevel(level, hwnd, time, mine_num, type);
 	}
 		break;
 	case WM_MOUSEMOVE:

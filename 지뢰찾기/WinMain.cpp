@@ -78,8 +78,8 @@ void CreateMap()
 		for(int i=0; i<Ynum; i++) {
 			for(int j=0; j<Xnum;j++)
 			{
-				if(map[i][j].mine==FALSE && rand()%6==2) {
-					map[i][j].mine=TRUE;
+				if(map[i][j].mine==false && rand()%6==2) {
+					map[i][j].mine=true;
 					replay.saveMine(j, i);
 					mine_num--;
 					if(mine_num==0)
@@ -101,12 +101,12 @@ void CreateMap()
 			for(int q=0; q<8; q++)
 			{
 				if(i+y[q]>=0 && i+y[q]<=Ynum && j+x[q]>=0 && j+x[q]<=Xnum)
-					if(map[i][j].mine==FALSE && map[i+y[q]][j+x[q]].mine==TRUE)
+					if(map[i][j].mine==false && map[i+y[q]][j+x[q]].mine==true)
 						map[i][j].num++;
 				
 			}
-			if(map[i][j].num==0 && map[i][j].mine==FALSE)
-					map[i][j].balank=TRUE;
+			if(map[i][j].num==0 && map[i][j].mine==false)
+					map[i][j].balank=true;
 		}
 	}
 }
@@ -123,7 +123,7 @@ void CheckBlank( int i, int j)
 				map[i+p][j+q].statue=down;
 				continue;
 			}
-			else if(map[i+p][j+q].statue==up && map[i+p][j+q].balank==TRUE) {
+			else if(map[i+p][j+q].statue==up && map[i+p][j+q].balank==true) {
 				map[i+p][j+q].statue=down;
 				CheckBlank(i+p, j+q);
 			}
@@ -137,8 +137,8 @@ void gameover(HWND hwnd, int select)
 	KillTimer(hwnd, 3);
 	for(int i=0; i<Ynum; i++) {
 		for(int j=0; j<Xnum; j++) {
-			if(map[i][j].mine==FALSE && map[i][j].flag==TRUE)
-				map[i][j].error=TRUE;
+			if(map[i][j].mine==false && map[i][j].flag==true)
+				map[i][j].error=true;
 			map[i][j].statue=down;
 		}
 	}
@@ -160,11 +160,11 @@ void result(HWND hwnd)
 	KillTimer(hwnd, 3);
 	for(int i=0; i<Ynum; i++) {
 		for(int j=0; j<Xnum; j++) {
-			if(map[i][j].flag==TRUE && map[i][j].mine==FALSE) {
+			if(map[i][j].flag==true && map[i][j].mine==false) {
 				select=1;
 				break;
 			}
-			if(map[i][j].boom==TRUE) {
+			if(map[i][j].boom==true) {
 				select=2;
 				break;
 			}
@@ -191,13 +191,13 @@ void SetNewMap(HWND hwnd)
 	for(int i=0; i<30; i++)
 			for(int j=0; j<16; j++) {
 				map[i][j].statue=up;
-				map[i][j].mine=FALSE;
+				map[i][j].mine=false;
 				map[i][j].num=0;
-				map[i][j].flag=FALSE;
-				map[i][j].balank=FALSE;
-				map[i][j].error=FALSE;
-				map[i][j].temp=FALSE;
-				map[i][j].boom=FALSE;
+				map[i][j].flag=false;
+				map[i][j].balank=false;
+				map[i][j].error=false;
+				map[i][j].temp=false;
+				map[i][j].boom=false;
 			}
 	
 	AdjustWindowRect( &rt, WS_OVERLAPPEDWINDOW, false );
@@ -206,9 +206,29 @@ void SetNewMap(HWND hwnd)
 ////////////////////////////
 
 //리플레이 관련
+void setReplay() {
+	for (const auto& p : replay.getMine()) {
+		map[p.second][p.first].mine = true;
+	}
 
+	for (int i = 0; i<Ynum; i++)
+	{
+		for (int j = 0; j<Xnum; j++)
+		{
+			for (int q = 0; q<8; q++)
+			{
+				if (i + y[q] >= 0 && i + y[q] <= Ynum && j + x[q] >= 0 && j + x[q] <= Xnum)
+					if (map[i][j].mine == false && map[i + y[q]][j + x[q]].mine == true)
+						map[i][j].num++;
+
+			}
+			if (map[i][j].num == 0 && map[i][j].mine == false)
+				map[i][j].balank = true;
+		}
+	}
+}
 ////////////////////////////
-void SetLevel(int level, HWND& hwnd, int& time, int& mine_num) {
+void SetLevel(int level, HWND& hwnd, int& time, int& mine_num, int type) {
 	switch (level)
 	{
 	case 1:
@@ -240,7 +260,14 @@ void SetLevel(int level, HWND& hwnd, int& time, int& mine_num) {
 		break;
 	}
 	SetNewMap(hwnd);
-	CreateMap();
+	if (type == gameType::nowPlay) {
+		replay.saveLevel(level);
+		CreateMap();
+	}
+	else {
+		setReplay();
+	}
+	
 	KillTimer(hwnd, 2);
 	time = 0;
 	mine_num = mine;
@@ -268,9 +295,8 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 	{
 		GetClientRect(hwnd, &rectView);
 		SetTimer(hwnd, 1, 70, NULL);
-		SetTimer(hwnd, 2, 1000, NULL);
-		SetTimer(hwnd, 3, 70, NULL);
-		select = FALSE;
+		
+		select = false;
 		BackGround = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP16));
 		tile = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP11));
 		Btile = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP2));
@@ -291,12 +317,8 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		smile = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP19));
 		smile2 = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP20));
 		mouse = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP21));
-		SetNewMap(hwnd);
-		Xnum = 9;
-		Ynum = 9;
-		mine = 10;
-		mine_num = mine;
-		CreateMap();
+
+		SetLevel(level, hwnd, time, mine_num, gameType::nowPlay);
 	}
 		break;
 	case WM_MOUSEMOVE:
@@ -306,7 +328,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		for (int i = 0; i < Ynum; i++) {
 			for (int j = 0; j < Xnum; j++)
 			{
-				map[i][j].mouse = FALSE;
+				map[i][j].mouse = false;
 			}
 		}
 		for (int i = 0; i < Ynum; i++) {
@@ -314,7 +336,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 			{
 				if (map[i][j].statue == up && mx >= j * 20 + 80 && mx <= (j + 1) * 20 + 80 && my >= i * 20 + 50 && my <= (i + 1) * 20 + 50)
 				{
-					map[i][j].mouse = TRUE;
+					map[i][j].mouse = true;
 				}
 			}
 		}
@@ -324,7 +346,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 	{
 		mx = HIWORD(lParam);
 		my = LOWORD(lParam);
-		statue = TRUE;
+		statue = true;
 		for (int i = 0; i < Ynum; i++) {
 			for (int j = 0; j < Xnum; j++)
 			{
@@ -333,26 +355,26 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 				{
 					replay.input(click::left, j, i);
 					map[i][j].statue = down;
-					if (map[i][j].mine == TRUE) {
-						map[i][j].boom = TRUE;
+					if (map[i][j].mine == true) {
+						map[i][j].boom = true;
 						gameover(hwnd, 1);
 					}
-					if (map[i][j].balank == TRUE)
+					if (map[i][j].balank == true)
 						CheckBlank(i, j);
 				}
 			}
 		}
 		//이모티콘 누르기
 		if (my > rt.right / 2 - 20 && mx > 20 && my < rt.right / 2 + 10 && mx < 50) {
-			select = TRUE;
-			SetLevel(level, hwnd, time, mine_num);
+			select = true;
+			SetLevel(level, hwnd, time, mine_num, gameType::nowPlay);
 		}
 	}
 		break;
 	case WM_LBUTTONUP:
 	{
-		statue = FALSE;
-		select = FALSE;
+		statue = false;
+		select = false;
 	}
 		break;
 	case WM_RBUTTONDOWN:
@@ -363,20 +385,20 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 			for (int j = 0; j < Xnum; j++)
 			{
 				if (mx >= j * 20 + 80 && mx <= (j + 1) * 20 + 80 && my >= i * 20 + 50 && my <= (i + 1) * 20 + 50) {
-					if (statue == TRUE && map[i][j].statue == down)
+					if (statue == true && map[i][j].statue == down)
 					{
 						replay.input(click::both, j, i);
 						t_num = map[i][j].num;
 						for (int q = 0; q < 8; q++)
 						{
-							if (map[i + y[q]][j + x[q]].flag == TRUE)
+							if (map[i + y[q]][j + x[q]].flag == true)
 								f_num++;
-							if (map[i + y[q]][j + x[q]].mine == FALSE && map[i + y[q]][j + x[q]].flag == TRUE)
+							if (map[i + y[q]][j + x[q]].mine == false && map[i + y[q]][j + x[q]].flag == true)
 								gameover(hwnd, 2);
 
 							else {
 								if (map[i + y[q]][j + x[q]].statue == up)
-									map[i + y[q]][j + x[q]].temp = TRUE;
+									map[i + y[q]][j + x[q]].temp = true;
 							}
 						}
 						if (f_num == t_num)
@@ -384,7 +406,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 							CheckBlank(i, j);
 							for (int q = 0; q < 8; q++)
 							{
-								if (map[i + y[q]][j + x[q]].temp == TRUE)
+								if (map[i + y[q]][j + x[q]].temp == true)
 									map[i + y[q]][j + x[q]].statue = down;
 							}
 						}
@@ -393,13 +415,13 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 					{
 						replay.input(click::right, j, i);
 						map[i][j].statue = down;
-						map[i][j].flag = TRUE;
+						map[i][j].flag = true;
 						mine_num--;
 					}
-					else if (map[i][j].statue == down && map[i][j].flag == TRUE) {
+					else if (map[i][j].statue == down && map[i][j].flag == true) {
 						replay.input(click::right, j, i);
 						map[i][j].statue = up;
-						map[i][j].flag = FALSE;
+						map[i][j].flag = false;
 						mine_num++;
 					}
 				}
@@ -413,7 +435,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 	{
 		for (int i = 0; i < Ynum; i++) {
 			for (int j = 0; j < Xnum; j++) {
-				map[i][j].temp = FALSE;
+				map[i][j].temp = false;
 			}
 		}
 	}
@@ -458,11 +480,11 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 				for(int j=0; j<Xnum; j++) {
 					if(map[i][j].statue==up) {
 						BitBlt(mem1dc, i*20+50, j*20+80, 20, 20, mem2dc, 0, 0, SRCCOPY);
-						if(map[i][j].temp==TRUE) {
+						if(map[i][j].temp==true) {
 							oldBit3 = (HBITMAP) SelectObject (mem3dc, Btile); 
 							BitBlt(mem1dc, i*20+50, j*20+80, 20, 20, mem3dc, 0, 0, SRCCOPY);
 						}
-						if(map[i][j].mouse==TRUE) {
+						if(map[i][j].mouse==true) {
 							oldBit3 = (HBITMAP) SelectObject (mem3dc, mouse); 
 							BitBlt(mem1dc, i*20+50, j*20+80, 20, 20, mem3dc, 0, 0, SRCCOPY);
 						}
@@ -470,11 +492,11 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 					else {
 						oldBit3 = (HBITMAP) SelectObject (mem3dc, Btile); 
 						BitBlt(mem1dc, i*20+50, j*20+80, 20, 20, mem3dc, 0, 0, SRCCOPY);
-						if(map[i][j].mine==TRUE) {
+						if(map[i][j].mine==true) {
 							oldBit3 = (HBITMAP) SelectObject (mem3dc, MINE); 
 							BitBlt(mem1dc, i*20+50, j*20+80, 20, 20, mem3dc, 0, 0, SRCCOPY);
 						}
-						if(map[i][j].boom==TRUE) {
+						if(map[i][j].boom==true) {
 							oldBit3 = (HBITMAP) SelectObject (mem3dc, boom); 
 							BitBlt(mem1dc, i*20+50, j*20+80, 20, 20, mem3dc, 0, 0, SRCCOPY);
 						}
@@ -510,11 +532,11 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 							oldBit3 = (HBITMAP) SelectObject (mem3dc, eight); 
 							BitBlt(mem1dc, i*20+50, j*20+80, 20, 20, mem3dc, 0, 0, SRCCOPY);
 						}
-						if(map[i][j].flag==TRUE) {
+						if(map[i][j].flag==true) {
 							oldBit3 = (HBITMAP) SelectObject (mem3dc, flag); 
 							BitBlt(mem1dc, i*20+50, j*20+80, 20, 20, mem3dc, 0, 0, SRCCOPY);
 						}
-						if(map[i][j].error==TRUE) {
+						if(map[i][j].error==true) {
 							oldBit3 = (HBITMAP) SelectObject (mem3dc, failflag); 
 							BitBlt(mem1dc, i*20+50, j*20+80, 20, 20, mem3dc, 0, 0, SRCCOPY);
 						}
@@ -526,7 +548,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 			TransparentBlt(mem1dc, rt.left+60, rt.bottom-70, 30, 30, mem4dc, 0,0,80,80, RGB(107,174,255));
 			oldBit4 = (HBITMAP) SelectObject (mem4dc, nmine);
 			TransparentBlt(mem1dc, rt.right-90, rt.bottom-70, 30, 30, mem4dc, 0,0,80,80, RGB(107,174,255));
-			if(select==FALSE) {
+			if(select==false) {
 				oldBit4 = (HBITMAP) SelectObject (mem4dc, smile);
 				TransparentBlt(mem1dc, rt.right/2-20,20, 30, 30, mem4dc, 0,0,595,595, RGB(255,255,255));
 			}
@@ -564,31 +586,31 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 			}
 			break;
 		}
-		InvalidateRgn(hwnd, NULL, FALSE);
+		InvalidateRgn(hwnd, NULL, false);
 		return 0;
 	case WM_COMMAND:
 		switch(wParam)
 		{
 		case ID_NEW:
-			SetLevel(level, hwnd, time, mine_num);
+			SetLevel(level, hwnd, time, mine_num, gameType::nowPlay);
 			break;
 		case ID_EXIT:
 			PostQuitMessage(0);
 			break;
 		case ID_EASY:
 			level=1;
-			SetLevel(level, hwnd, time, mine_num);
+			SetLevel(level, hwnd, time, mine_num, gameType::nowPlay);
 			break;
 		case ID_MEDIUM:
 			level=2;
-			SetLevel(level, hwnd, time, mine_num);
+			SetLevel(level, hwnd, time, mine_num, gameType::nowPlay);
 			break;
 		case ID_HARD:
 			level=3;
-			SetLevel(level, hwnd, time, mine_num);
+			SetLevel(level, hwnd, time, mine_num, gameType::nowPlay);
 			break;
 		}
-		InvalidateRgn(hwnd, NULL, FALSE);
+		InvalidateRgn(hwnd, NULL, false);
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);

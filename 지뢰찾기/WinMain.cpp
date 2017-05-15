@@ -9,6 +9,9 @@ HINSTANCE g_hInst;
 LPSTR lpszClass="first";
 
 RECT rt = { 0, 0, 280, 340 };
+
+Replay replay;
+
 int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance
 					 ,LPSTR lpszCmdParam,int nCmdShow)
 {
@@ -62,6 +65,10 @@ int x[8]={-1, 0, 1, -1, 1, -1, 0, 1};
 int y[8]={-1, -1, -1, 0, 0, 1, 1, 1};
 int Xnum, Ynum, mine;
 grid map[30][16];
+
+enum gameType {nowPlay, nowReplay};
+
+//게임 플레이 관련
 void CreateMap()
 {
 	int mine_num=mine;
@@ -73,6 +80,7 @@ void CreateMap()
 			{
 				if(map[i][j].mine==FALSE && rand()%6==2) {
 					map[i][j].mine=TRUE;
+					replay.saveMine(j, i);
 					mine_num--;
 					if(mine_num==0)
 						break;
@@ -195,7 +203,11 @@ void SetNewMap(HWND hwnd)
 	AdjustWindowRect( &rt, WS_OVERLAPPEDWINDOW, false );
 	SetWindowPos(hwnd,  HWND_TOP ,100,100,rt.right-rt.left, rt.bottom-rt.top,NULL);
 }
+////////////////////////////
 
+//리플레이 관련
+
+////////////////////////////
 void SetLevel(int level, HWND& hwnd, int& time, int& mine_num) {
 	switch (level)
 	{
@@ -204,18 +216,27 @@ void SetLevel(int level, HWND& hwnd, int& time, int& mine_num) {
 		rt.left = 0;
 		rt.bottom = 340;
 		rt.right = 280;
+
+		Xnum = 9; Ynum = 9;
+		mine_num = mine = 10;
 		break;
 	case 2:
 		rt.top = 0;
 		rt.left = 0;
 		rt.bottom = 480;
 		rt.right = 420;
+
+		Xnum = 16; Ynum = 16;
+		mine_num = mine = 50;
 		break;
 	case 3:
 		rt.top = 0;
 		rt.left = 0;
 		rt.bottom = 480;
 		rt.right = 700;
+
+		Xnum = 16; Ynum = 30;
+		mine_num = mine = 99;
 		break;
 	}
 	SetNewMap(hwnd);
@@ -239,7 +260,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 	static char buf[4], buf2[2];
 	PAINTSTRUCT ps; 
 
-	Replay replay;
+	
 
 	switch(iMsg)
 	{
@@ -279,111 +300,123 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 	}
 		break;
 	case WM_MOUSEMOVE:
-		mx=HIWORD (lParam);
-		my=LOWORD (lParam);
-		for(int i=0; i<Ynum;i++) {
-			for(int j=0; j<Xnum; j++)
+	{
+		mx = HIWORD(lParam);
+		my = LOWORD(lParam);
+		for (int i = 0; i < Ynum; i++) {
+			for (int j = 0; j < Xnum; j++)
 			{
-				map[i][j].mouse=FALSE;
+				map[i][j].mouse = FALSE;
 			}
 		}
-		for(int i=0; i<Ynum;i++) {
-			for(int j=0; j<Xnum; j++)
+		for (int i = 0; i < Ynum; i++) {
+			for (int j = 0; j < Xnum; j++)
 			{
-				if(map[i][j].statue==up && mx>=j*20+80 && mx<=(j+1)*20+80 && my>=i*20+50 && my<=(i+1)*20+50)
+				if (map[i][j].statue == up && mx >= j * 20 + 80 && mx <= (j + 1) * 20 + 80 && my >= i * 20 + 50 && my <= (i + 1) * 20 + 50)
 				{
-					map[i][j].mouse=TRUE;
+					map[i][j].mouse = TRUE;
 				}
 			}
 		}
+	}
 		break;
 	case WM_LBUTTONDOWN:
-		mx=HIWORD (lParam);
-		my=LOWORD (lParam);
-		statue=TRUE;
-		for(int i=0; i<Ynum;i++) {
-			for(int j=0; j<Xnum; j++)
+	{
+		mx = HIWORD(lParam);
+		my = LOWORD(lParam);
+		statue = TRUE;
+		for (int i = 0; i < Ynum; i++) {
+			for (int j = 0; j < Xnum; j++)
 			{
 				//빈 칸 누르기
-				if(map[i][j].statue==up && mx>=j*20+80 && mx<=(j+1)*20+80 && my>=i*20+50 && my<=(i+1)*20+50)
+				if (map[i][j].statue == up && mx >= j * 20 + 80 && mx <= (j + 1) * 20 + 80 && my >= i * 20 + 50 && my <= (i + 1) * 20 + 50)
 				{
 					replay.input(click::left, j, i);
-					map[i][j].statue=down;
-					if(map[i][j].mine==TRUE) {
-						map[i][j].boom=TRUE;
+					map[i][j].statue = down;
+					if (map[i][j].mine == TRUE) {
+						map[i][j].boom = TRUE;
 						gameover(hwnd, 1);
 					}
-					if(map[i][j].balank==TRUE)
-						CheckBlank( i, j);
+					if (map[i][j].balank == TRUE)
+						CheckBlank(i, j);
 				}
 			}
 		}
 		//이모티콘 누르기
-		if(my>rt.right/2-20 && mx>20 && my< rt.right/2+10 && mx<50) {
-			select=TRUE;
+		if (my > rt.right / 2 - 20 && mx > 20 && my < rt.right / 2 + 10 && mx < 50) {
+			select = TRUE;
 			SetLevel(level, hwnd, time, mine_num);
 		}
-		
+	}
 		break;
 	case WM_LBUTTONUP:
-		statue=FALSE;
-		select=FALSE;
+	{
+		statue = FALSE;
+		select = FALSE;
+	}
 		break;
 	case WM_RBUTTONDOWN:
-		mx=HIWORD (lParam);
-		my=LOWORD (lParam);
-		for(int i=0; i<Ynum;i++) {
-			for(int j=0; j<Xnum; j++)
+	{
+		mx = HIWORD(lParam);
+		my = LOWORD(lParam);
+		for (int i = 0; i < Ynum; i++) {
+			for (int j = 0; j < Xnum; j++)
 			{
-				if(statue==TRUE && map[i][j].statue==down && mx>=j*20+80 && mx<=(j+1)*20+80 && my>=i*20+50 && my<=(i+1)*20+50)
-				{
-					
-					t_num=map[i][j].num;
-					for(int q=0; q<8; q++)
+				if (mx >= j * 20 + 80 && mx <= (j + 1) * 20 + 80 && my >= i * 20 + 50 && my <= (i + 1) * 20 + 50) {
+					if (statue == TRUE && map[i][j].statue == down)
 					{
-						if(map[i+y[q]][j+x[q]].flag==TRUE)
-							f_num++;
-						if(map[i+y[q]][j+x[q]].mine==FALSE && map[i+y[q]][j+x[q]].flag==TRUE)
-							gameover(hwnd, 2);
-						
-						else {
-							if(map[i+y[q]][j+x[q]].statue==up)
-								map[i+y[q]][j+x[q]].temp=TRUE;
-						}
-					}
-					if(f_num==t_num)
-					{
-						CheckBlank( i, j);
-						for(int q=0; q<8; q++)
+						replay.input(click::both, j, i);
+						t_num = map[i][j].num;
+						for (int q = 0; q < 8; q++)
 						{
-							if(map[i+y[q]][j+x[q]].temp==TRUE)
-								map[i+y[q]][j+x[q]].statue=down;
+							if (map[i + y[q]][j + x[q]].flag == TRUE)
+								f_num++;
+							if (map[i + y[q]][j + x[q]].mine == FALSE && map[i + y[q]][j + x[q]].flag == TRUE)
+								gameover(hwnd, 2);
+
+							else {
+								if (map[i + y[q]][j + x[q]].statue == up)
+									map[i + y[q]][j + x[q]].temp = TRUE;
+							}
+						}
+						if (f_num == t_num)
+						{
+							CheckBlank(i, j);
+							for (int q = 0; q < 8; q++)
+							{
+								if (map[i + y[q]][j + x[q]].temp == TRUE)
+									map[i + y[q]][j + x[q]].statue = down;
+							}
 						}
 					}
+					if (map[i][j].statue == up)
+					{
+						replay.input(click::right, j, i);
+						map[i][j].statue = down;
+						map[i][j].flag = TRUE;
+						mine_num--;
+					}
+					else if (map[i][j].statue == down && map[i][j].flag == TRUE) {
+						replay.input(click::right, j, i);
+						map[i][j].statue = up;
+						map[i][j].flag = FALSE;
+						mine_num++;
+					}
 				}
-				if(map[i][j].statue==up && mx>=j*20+80 && mx<=(j+1)*20+80 && my>=i*20+50 && my<=(i+1)*20+50)
-				{
-					map[i][j].statue=down;
-					map[i][j].flag=TRUE;
-					mine_num--;
-				}
-				else if(map[i][j].statue==down && map[i][j].flag==TRUE && mx>=j*20+80 && mx<=(j+1)*20+80 && my>=i*20+50 && my<=(i+1)*20+50) {
-					map[i][j].statue=up;
-					map[i][j].flag=FALSE;
-					mine_num++;
-				
-				}	
 			}
-			t_num=0;
-			f_num=0;
+			t_num = 0;
+			f_num = 0;
 		}
+	}
 		break;
 	case WM_RBUTTONUP:
-		for(int i=0; i<Ynum;i++) {
-			for(int j=0; j<Xnum; j++) {
-				map[i][j].temp=FALSE;
+	{
+		for (int i = 0; i < Ynum; i++) {
+			for (int j = 0; j < Xnum; j++) {
+				map[i][j].temp = FALSE;
 			}
 		}
+	}
 		break;
 	case WM_PAINT:
 	{
@@ -544,20 +577,14 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 			break;
 		case ID_EASY:
 			level=1;
-			Xnum=9; Ynum=9;
-			mine_num=mine=10;
 			SetLevel(level, hwnd, time, mine_num);
 			break;
 		case ID_MEDIUM:
-			Xnum=16; Ynum=16;
-			mine_num=mine=50;
 			level=2;
 			SetLevel(level, hwnd, time, mine_num);
 			break;
 		case ID_HARD:
 			level=3;
-			Xnum=16; Ynum=30;
-			mine_num=mine=99;
 			SetLevel(level, hwnd, time, mine_num);
 			break;
 		}

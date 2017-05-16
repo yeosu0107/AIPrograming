@@ -16,7 +16,7 @@ Replay::Replay()
 
 Replay::~Replay()
 {
-	fileSave();
+	fileSave("Replay1.txt");
 }
 
 void Replay::input(int type, int x, int y) {
@@ -43,9 +43,9 @@ void Replay::saveMine(int xPos, int yPos)
 	mine.push_back(pos);
 }
 
-void Replay::fileOpen()
+void Replay::fileOpen(string name)
 {
-	ifstream in("replay.txt");
+	ifstream in(name);
 	v.clear();
 	mine.clear();
 	in >> level;
@@ -72,9 +72,9 @@ void Replay::fileOpen()
 	}
 }
 
-void Replay::fileSave()
+void Replay::fileSave(string name)
 {
-	ofstream out("replay.txt", ios::trunc);
+	ofstream out(name, ios::trunc);
 
 	out << level << endl;
 

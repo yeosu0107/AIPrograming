@@ -44,7 +44,7 @@ public:
 	vector<pair<int, int>> getMine() const { return mine; }
 	vector<Data> getInput() const { return v; }
 
-	void fileOpen();
-	void fileSave();
+	void fileOpen(string name);
+	void fileSave(string name);
 };
 

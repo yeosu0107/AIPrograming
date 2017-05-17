@@ -40,6 +40,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance
 	WndClass.style=CS_HREDRAW | CS_VREDRAW;
 	RegisterClass(&WndClass);
 
+	
+
 	hWnd=CreateWindow(lpszClass,lpszClass,WS_BORDER | WS_SYSMENU,
 		CW_USEDEFAULT,CW_USEDEFAULT,rt.right-rt.left, rt.bottom-rt.top,
 		NULL,(HMENU)NULL,hInstance,NULL);
@@ -137,7 +139,7 @@ void CheckBlank( int i, int j)
 		}
 	}
 }
-void gameover(HWND hwnd, int select)
+void gameover(HWND hwnd, int select, int type)
 {
 	//KillTimer(hwnd, 2);
 	KillTimer(hwnd, 3);
@@ -148,14 +150,23 @@ void gameover(HWND hwnd, int select)
 			map[i][j].statue=down;
 		}
 	}
+	
 	switch(select)
-	{
+	{	
 	case 1:
+		if (type == gameType::nowReplay) {
+			MessageBox(hwnd, L"패배\n지뢰를 밟았습니다.", L"리플레이 종료", MB_OK);
+			return;
+		}
 		if (MessageBox(hwnd, L"리플레이를\n저장하시겠습니까?", L"패배 - 지뢰를 밟았습니다.", MB_YESNO) == IDYES) {
 			replay.fileSave("replay1.txt");
 		}
 		break;
 	case 2:
+		if (type == gameType::nowReplay) {
+			MessageBox(hwnd, L"패배\n잘못된 곳에 지뢰를 선택", L"리플레이 종료", MB_OK);
+			return;
+		}
 		if (MessageBox(hwnd, L"리플레이를\n저장하시겠습니까?", L"패배 - 잘못된 곳에 지뢰를 선택", MB_YESNO) == IDYES) {
 			replay.fileSave("replay1.txt");
 		}
@@ -163,7 +174,7 @@ void gameover(HWND hwnd, int select)
 	}
 	
 }
-void result(HWND hwnd)
+void result(HWND hwnd, int type)
 {
 	int select=0;
 	KillTimer(hwnd, 2);
@@ -182,16 +193,35 @@ void result(HWND hwnd)
 		if(select==1 || select==2)
 			break;
 	}
+	
 	switch(select)
 	{
 	case 1:
-		MessageBox(hwnd, L"리플레이를\n저장하시겠습니까?", L"패배 - 잘못된 곳에 지뢰를 선택", MB_YESNO);
+		if (type == gameType::nowReplay) {
+			MessageBox(hwnd, L"패배\n잘못된 곳에 지뢰를 선택", L"리플레이 종료", MB_OK);
+			return;
+		}
+		if (MessageBox(hwnd, L"리플레이를\n저장하시겠습니까?", L"패배 - 잘못된 곳에 지뢰를 선택", MB_YESNO) == IDYES) {
+			replay.fileSave("replay1.txt");
+		}
 		break;
 	case 0:
-		MessageBox(hwnd, L"리플레이를\n저장하시겠습니까?", L"승리!", MB_YESNO);
+		if (type == gameType::nowReplay) {
+			MessageBox(hwnd, L"승리하셨습니다.", L"리플레이 종료", MB_OK);
+			return;
+		}
+		if (MessageBox(hwnd, L"리플레이를\n저장하시겠습니까?", L"승리!", MB_YESNO)) {
+			replay.fileSave("replay1.txt");
+		}
 		break;
 	case 2:
-		MessageBox(hwnd, L"리플레이를\n저장하시겠습니까?", L"패배 - 지뢰를 밟았습니다.", MB_YESNO);
+		if (type == gameType::nowReplay) {
+			MessageBox(hwnd, L"패배\n지뢰를 밟았습니다.", L"리플레이 종료", MB_OK);
+			return;
+		}
+		if (MessageBox(hwnd, L"리플레이를\n저장하시겠습니까?", L"패배 - 지뢰를 밟았습니다.", MB_YESNO) == IDYES) {
+			replay.fileSave("replay1.txt");
+		}
 		break;
 	}
 	
@@ -216,18 +246,20 @@ void SetNewMap(HWND hwnd)
 ////////////////////////////
 
 //게임 플레이 관련
-void ClickBlank(HWND& hwnd, int xPos, int yPos) {
+void setReplay();
+
+void ClickBlank(HWND& hwnd, const int& xPos, const int& yPos, const int& type) {
 	replay.input(click::left, xPos, yPos);
 	map[yPos][xPos].statue = down;
 	if (map[yPos][xPos].mine == true) {
 		map[yPos][xPos].boom = true;
-		gameover(hwnd, 1);
+		gameover(hwnd, 1, type);
 		return;
 	}
 	if (map[yPos][xPos].blank == true)
 		CheckBlank(yPos, xPos);
 }
-void ClickLR(HWND& hwnd, int xPos, int yPos, int& t_num, int& f_num) {
+void ClickLR(HWND& hwnd, const int& xPos, const int& yPos, int& t_num, int& f_num, int type) {
 	int j = xPos;
 	int i = yPos;
 	replay.input(click::both, j, i);
@@ -237,7 +269,7 @@ void ClickLR(HWND& hwnd, int xPos, int yPos, int& t_num, int& f_num) {
 		if (map[i + y[q]][j + x[q]].flag == true)
 			f_num++;
 		if (map[i + y[q]][j + x[q]].mine == false && map[i + y[q]][j + x[q]].flag == true) {
-			gameover(hwnd, 2);
+			gameover(hwnd, 2, type);
 			return;
 		}
 
@@ -265,7 +297,7 @@ void UpLR() {
 		}
 	}
 }
-void ClickFlag(int xPos, int yPos, int& mine_num) {
+void ClickFlag(const int& xPos, const int& yPos, int& mine_num) {
 	int j = xPos;
 	int i = yPos;
 	replay.input(click::right, j, i);
@@ -280,51 +312,7 @@ void ClickFlag(int xPos, int yPos, int& mine_num) {
 		mine_num++;
 	}
 }
-////////////////////////////
-
-
-//리플레이 관련
-void setReplay() {
-	for (const auto& p : replay.getMine()) {
-		map[p.second][p.first].mine = true;
-	}
-
-	for (int i = 0; i<Ynum; i++)
-	{
-		for (int j = 0; j<Xnum; j++)
-		{
-			for (int q = 0; q<8; q++)
-			{
-				if (i + y[q] >= 0 && i + y[q] <= Ynum && j + x[q] >= 0 && j + x[q] <= Xnum)
-					if (map[i][j].mine == false && map[i + y[q]][j + x[q]].mine == true)
-						map[i][j].num++;
-
-			}
-			if (map[i][j].num == 0 && map[i][j].mine == false)
-				map[i][j].blank = true;
-		}
-	}
-}
-void getReplay(vector<Data>::iterator& iter, HWND& hwnd, int& t_num, int& f_num, int& mine_num) {
-	int xPos = iter->getX();
-	int yPos = iter->getY();
-	int rtype = iter->getType();
-	switch (rtype) {
-	case click::left:
-		ClickBlank(hwnd, xPos, yPos);
-		break;
-	case click::right:
-		ClickFlag(xPos, yPos, mine_num);
-		break;
-	case click::both:
-		ClickLR(hwnd, xPos, yPos, t_num, f_num);
-		SetTimer(hwnd, 5, 200, NULL);
-		break;
-	}
-}
-
-////////////////////////////
-void SetLevel(int level, HWND& hwnd, HWND* button, int& mine_num, int type) {
+void SetLevel(int level, HWND& hwnd, int& mine_num, int type) {
 	switch (level)
 	{
 	case 1:
@@ -355,10 +343,6 @@ void SetLevel(int level, HWND& hwnd, HWND* button, int& mine_num, int type) {
 		mine_num = mine = 99;
 		break;
 	}
-	for (int i = 0; i < 4; ++i) {
-		if(button[i])
-			DestroyWindow(button[i]);
-	}
 	SetNewMap(hwnd);
 	if (type == gameType::nowPlay) {
 		replay.saveLevel(level);
@@ -368,13 +352,64 @@ void SetLevel(int level, HWND& hwnd, HWND* button, int& mine_num, int type) {
 		setReplay();
 	}
 	KillTimer(hwnd, 4);
-	
-	//KillTimer(hwnd, 2);
-	//time = 0;
+
 	mine_num = mine;
-	//SetTimer(hwnd, 2, 1000, NULL);
 	SetTimer(hwnd, 3, 70, NULL);
 }
+////////////////////////////
+
+using vData = vector<Data>;
+
+//리플레이 관련
+void setReplay() {
+	for (const auto& p : replay.getMine()) {
+		map[p.second][p.first].mine = true;
+	}
+
+	for (int i = 0; i<Ynum; i++)
+	{
+		for (int j = 0; j<Xnum; j++)
+		{
+			for (int q = 0; q<8; q++)
+			{
+				if (i + y[q] >= 0 && i + y[q] <= Ynum && j + x[q] >= 0 && j + x[q] <= Xnum)
+					if (map[i][j].mine == false && map[i + y[q]][j + x[q]].mine == true)
+						map[i][j].num++;
+
+			}
+			if (map[i][j].num == 0 && map[i][j].mine == false)
+				map[i][j].blank = true;
+		}
+	}
+}
+void getReplay(vData::iterator& iter, HWND& hwnd, int& t_num, int& f_num, int& mine_num) {
+	int xPos = iter->getX();
+	int yPos = iter->getY();
+	int rtype = iter->getType();
+	switch (rtype) {
+	case click::left:
+		ClickBlank(hwnd, xPos, yPos, gameType::nowReplay);
+		break;
+	case click::right:
+		ClickFlag(xPos, yPos, mine_num);
+		break;
+	case click::both:
+		ClickLR(hwnd, xPos, yPos, t_num, f_num, gameType::nowReplay);
+		SetTimer(hwnd, 5, 200, NULL);
+		break;
+	}
+}
+void initReplay(vData& inputData, vData::iterator& iter, 
+	int& type, time_t& timeCount, int& mine_num, HWND& hwnd) {
+	inputData = replay.getInput();
+	timeCount = inputData[0].getTime();
+	iter = inputData.begin();
+	type = gameType::nowReplay;
+	SetLevel(replay.getLevel(), hwnd, mine_num, type);
+	SetTimer(hwnd, 4, 1000, NULL);
+}
+////////////////////////////
+
 
 LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 {
@@ -389,14 +424,10 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 	PAINTSTRUCT ps; 
 
 	static int type;
-	static vector<Data> inputData;
-	static vector<Data>::iterator iter;
-	static int index;
-	static time_t tmp;
+	static vData inputData;
+	static vData::iterator iter;
 
-	static HWND buttonHwnd[4];
-	static bool replayMode=false;
-	static bool replayRun=false;
+	static time_t timeCount;
 
 	switch(iMsg)
 	{
@@ -427,12 +458,13 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		smile2 = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP20));
 		mouse = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP21));
 		type = gameType::nowPlay;
-		index = -1;
-		SetLevel(level, hwnd, buttonHwnd,mine_num, type);
+		SetLevel(level, hwnd, mine_num, type);
 	}
 		break;
 	case WM_MOUSEMOVE:
 	{
+		if (type != gameType::nowPlay)
+			break;
 		mx = HIWORD(lParam);
 		my = LOWORD(lParam);
 		for (int i = 0; i < Ynum; i++) {
@@ -454,6 +486,8 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		break;
 	case WM_LBUTTONDOWN:
 	{
+		if (type!=gameType::nowPlay)
+			break;
 		mx = HIWORD(lParam);
 		my = LOWORD(lParam);
 		statue = true;
@@ -463,25 +497,29 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 				//빈 칸 누르기
 				if (map[i][j].statue == up && mx >= j * 20 + 80 && mx <= (j + 1) * 20 + 80 && my >= i * 20 + 50 && my <= (i + 1) * 20 + 50)
 				{
-					ClickBlank(hwnd, j, i);
+					ClickBlank(hwnd, j, i, gameType::nowPlay);
 				}
 			}
 		}
 		//이모티콘 누르기
 		if (my > rt.right / 2 - 20 && mx > 20 && my < rt.right / 2 + 10 && mx < 50) {
 			select = true;
-			SetLevel(level, hwnd, buttonHwnd, mine_num, gameType::nowPlay);
+			SetLevel(level, hwnd, mine_num, gameType::nowPlay);
 		}
 	}
 		break;
 	case WM_LBUTTONUP:
 	{
+		if (type != gameType::nowPlay)
+			break;
 		statue = false;
 		select = false;
 	}
 		break;
 	case WM_RBUTTONDOWN:
 	{
+		if (type != gameType::nowPlay)
+			break;
 		mx = HIWORD(lParam);
 		my = LOWORD(lParam);
 		for (int i = 0; i < Ynum; i++) {
@@ -489,7 +527,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 			{
 				if (mx >= j * 20 + 80 && mx <= (j + 1) * 20 + 80 && my >= i * 20 + 50 && my <= (i + 1) * 20 + 50) {
 					if (statue == true && map[i][j].statue == down)
-						ClickLR(hwnd, j, i, t_num, f_num);
+						ClickLR(hwnd, j, i, t_num, f_num, gameType::nowPlay);
 					else
 						ClickFlag(j, i, mine_num);
 				}
@@ -501,6 +539,8 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		break;
 	case WM_RBUTTONUP:
 	{
+		if (type != gameType::nowPlay)
+			break;
 		UpLR();
 	}
 		break;
@@ -641,7 +681,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 						break;
 					}
 					if (i == Ynum - 1 && j == Xnum - 1) {
-						result(hwnd);
+						result(hwnd, type);
 					}
 				}
 				if (temp == 1)
@@ -651,18 +691,21 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		break;
 		case 4: //리플레이
 		{
-			if (iter >= inputData.end()-1)
+			if (iter >= inputData.end()-1) {
 				KillTimer(hwnd, 4);
-			if (tmp > iter->getTime()) {
-				tmp = iter->getTime();
+				//type = gameType::nowPlay;
+				//break;
 			}
-			if (tmp != iter->getTime()) {
-				tmp++;
+			if (timeCount > iter->getTime()) {
+				timeCount = iter->getTime();
+			}
+			if (timeCount != iter->getTime()) {
+				timeCount++;
 				break;
 			}
 			getReplay(iter, hwnd, t_num, f_num, mine_num);
 			iter += 1;
-			tmp++;
+			timeCount++;
 		}
 		break;
 		case 5: //리플레이
@@ -680,8 +723,8 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		switch(wParam)
 		{
 		case ID_NEW:
-			SetLevel(level, hwnd, buttonHwnd, mine_num, gameType::nowPlay);
-			replayMode = false;
+			SetLevel(level, hwnd, mine_num, gameType::nowPlay);
+			type = gameType::nowPlay;
 			break;
 		case ID_EXIT:
 			PostQuitMessage(0);
@@ -689,100 +732,38 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		case ID_EASY:
 			level=1;
 			type = gameType::nowPlay;
-			SetLevel(level, hwnd, buttonHwnd, mine_num, type);
-			replayMode = false;
+			SetLevel(level, hwnd, mine_num, type);
 			break;
 		case ID_MEDIUM:
 			level=2;
 			type = gameType::nowPlay;
-			SetLevel(level, hwnd, buttonHwnd, mine_num, type);
-			replayMode = false;
+			SetLevel(level, hwnd, mine_num, type);
 			break;
 		case ID_HARD:
 			level=3;
 			type = gameType::nowPlay;
-			SetLevel(level, hwnd, buttonHwnd, mine_num, type);
-			replayMode = false;
+			SetLevel(level, hwnd, mine_num, type);
 			break;
 		case ID_REPLAY_SLOT1:
 			if (!replay.fileOpen("replay1.txt")) {
 				MessageBox(hwnd, L"리플레이 파일이\n존재하지않습니다.", L"에러", MB_OK);
 				break;
 			}
-			inputData = replay.getInput();
-			index = 0;
-			tmp = inputData[0].getTime();
-			iter = inputData.begin();
-			type = gameType::nowReplay;
-			SetLevel(replay.getLevel(), hwnd, buttonHwnd, mine_num, type);
-			buttonHwnd[0] = CreateWindow(TEXT("button"), TEXT("←"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right / 2 - 58, 20, 25, 25, hwnd, (HMENU)ID_BUTTON_PREV, g_hInst, NULL);
-			buttonHwnd[1] = CreateWindow(TEXT("button"), TEXT("→"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right / 2 + 20, 20, 25, 25, hwnd, (HMENU)ID_BUTTON_NEXT, g_hInst, NULL);
-			buttonHwnd[2] = CreateWindow(TEXT("button"), TEXT("재생"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right - 60, 20, 45, 25, hwnd, (HMENU)ID_BUTTON_PLAY, g_hInst, NULL);
-			buttonHwnd[3] = CreateWindow(TEXT("button"), TEXT("정지"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right - 60, 50, 45, 25, hwnd, (HMENU)ID_BUTTON_STOP, g_hInst, NULL);
-			replayMode = true;
+			initReplay(inputData, iter, type, timeCount, mine_num, hwnd);
 			break;
 		case ID_REPLAY_SLOT2:
 			if (!replay.fileOpen("replay2.txt")) {
 				MessageBox(hwnd, L"리플레이 파일이\n존재하지않습니다.", L"에러", MB_OK);
 				break;
 			}
-			inputData = replay.getInput();
-			index = 0;
-			tmp = inputData[0].getTime();
-			iter = inputData.begin();
-			type = gameType::nowReplay;
-			SetLevel(replay.getLevel(), hwnd, buttonHwnd, mine_num, type);
-			buttonHwnd[0] = CreateWindow(TEXT("button"), TEXT("←"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right / 2 - 58, 20, 25, 25, hwnd, (HMENU)ID_BUTTON_PREV, g_hInst, NULL);
-			buttonHwnd[1] = CreateWindow(TEXT("button"), TEXT("→"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right / 2 + 20, 20, 25, 25, hwnd, (HMENU)ID_BUTTON_NEXT, g_hInst, NULL);
-			buttonHwnd[2] = CreateWindow(TEXT("button"), TEXT("재생"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right - 60, 20, 45, 25, hwnd, (HMENU)ID_BUTTON_PLAY, g_hInst, NULL);
-			buttonHwnd[3] = CreateWindow(TEXT("button"), TEXT("정지"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right - 60, 50, 45, 25, hwnd, (HMENU)ID_BUTTON_STOP, g_hInst, NULL);
-			replayMode = true;
+			initReplay(inputData, iter, type, timeCount, mine_num, hwnd);
 			break;
 		case ID_REPLAY_SLOT3:
 			if (!replay.fileOpen("replay3.txt")) {
 				MessageBox(hwnd, L"리플레이 파일이\n존재하지않습니다.", L"에러", MB_OK);
 				break;
 			}
-			inputData = replay.getInput();
-			index = 0;
-			tmp = inputData[0].getTime();
-			iter = inputData.begin();
-			type = gameType::nowReplay;
-			SetLevel(replay.getLevel(), hwnd, buttonHwnd, mine_num, type);
-			buttonHwnd[0] = CreateWindow(TEXT("button"), TEXT("←"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right / 2 - 58, 20, 25, 25, hwnd, (HMENU)ID_BUTTON_PREV, g_hInst, NULL);
-			buttonHwnd[1] = CreateWindow(TEXT("button"), TEXT("→"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right / 2 + 20, 20, 25, 25, hwnd, (HMENU)ID_BUTTON_NEXT, g_hInst, NULL);
-			buttonHwnd[2] = CreateWindow(TEXT("button"), TEXT("재생"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right - 60, 20, 45, 25, hwnd, (HMENU)ID_BUTTON_PLAY, g_hInst, NULL);
-			buttonHwnd[3] = CreateWindow(TEXT("button"), TEXT("정지"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right - 60, 50, 45, 25, hwnd, (HMENU)ID_BUTTON_STOP, g_hInst, NULL);
-			replayMode = true;
-			break;
-		case ID_BUTTON_NEXT:
-			if (replayRun)
-				break;
-			if (iter != inputData.end() - 1) {
-				iter++;
-				getReplay(iter, hwnd, t_num, f_num, mine_num);
-			}
-
-			break;
-		case ID_BUTTON_PREV:
-			if (replayRun)
-				break;
-			if (iter != inputData.begin()) {
-				iter--;
-				getReplay(iter, hwnd, t_num, f_num, mine_num);
-			}
-			break;
-		case ID_BUTTON_PLAY:
-			if (!replayRun) {
-				SetTimer(hwnd, 4, 1000, NULL);
-				replayRun = true;;
-			}
-			break;
-		case ID_BUTTON_STOP:
-			if (replayRun) {
-				KillTimer(hwnd, 4);
-				replayRun = false;
-			}
+			initReplay(inputData, iter, type, timeCount, mine_num, hwnd);
 			break;
 		}
 		InvalidateRgn(hwnd, NULL, false);

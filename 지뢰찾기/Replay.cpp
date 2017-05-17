@@ -42,9 +42,11 @@ void Replay::saveMine(int xPos, int yPos)
 	mine.push_back(pos);
 }
 
-void Replay::fileOpen(string name)
+bool Replay::fileOpen(string name)
 {
 	ifstream in(name);
+	if (!in)
+		return false;
 	v.clear();
 	mine.clear();
 	in >> level;
@@ -71,6 +73,7 @@ void Replay::fileOpen(string name)
 		v.emplace_back(tmp, inputType, inputX, inputY);
 	}
 	in.close();
+	return true;
 }
 
 void Replay::fileSave(string name)

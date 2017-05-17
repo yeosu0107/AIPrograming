@@ -13,6 +13,11 @@ RECT rt = { 0, 0, 280, 340 };
 
 Replay replay;
 
+#define ID_BUTTON_NEXT	0
+#define ID_BUTTON_PREV	1
+#define ID_BUTTON_PLAY	2
+#define ID_BUTTON_STOP	3
+
 int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance
 					 ,LPSTR lpszCmdParam,int nCmdShow)
 {
@@ -300,6 +305,23 @@ void setReplay() {
 		}
 	}
 }
+void getReplay(vector<Data>::iterator& iter, HWND& hwnd, int& t_num, int& f_num, int& mine_num) {
+	int xPos = iter->getX();
+	int yPos = iter->getY();
+	int rtype = iter->getType();
+	switch (rtype) {
+	case click::left:
+		ClickBlank(hwnd, xPos, yPos);
+		break;
+	case click::right:
+		ClickFlag(xPos, yPos, mine_num);
+		break;
+	case click::both:
+		ClickLR(hwnd, xPos, yPos, t_num, f_num);
+		SetTimer(hwnd, 5, 200, NULL);
+		break;
+	}
+}
 
 ////////////////////////////
 void SetLevel(int level, HWND& hwnd, HWND* button, int& mine_num, int type) {
@@ -363,7 +385,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 	int t_num=0, f_num=0;
 	static int level=1, temp=0, mine_num=0, mx, my, check=0;
 	static bool statue, select;
-	static TCHAR buf[10], buf2[10];
+	static TCHAR buf[10];
 	PAINTSTRUCT ps; 
 
 	static int type;
@@ -490,13 +512,9 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		oldBit1 = (HBITMAP)SelectObject(mem1dc, hBit1);
 		BitBlt(hdc, 0, 0, rectView.right, rectView.bottom, mem1dc, 0, 0, SRCCOPY);
 		
-		/*itoa(time, buf, 12);
-		itoa(mine_num, buf2, 12);*/
-		//wsprintf(buf, L"%d", time);
-		wsprintf(buf2, L"%d", mine_num);
+		wsprintf(buf, L"%d", mine_num);
 		SetBkMode(hdc, TRANSPARENT);
-		//TextOut(hdc, rt.left + 100, rt.bottom - 63, buf, lstrlen(buf));
-		TextOut(hdc, rt.right/2 +10 , rt.bottom - 63, buf2, lstrlen(buf2));
+		TextOut(hdc, rt.right/2 +10 , rt.bottom - 63, buf, lstrlen(buf));
 		SelectObject(mem1dc, oldBit1);
 		DeleteDC(mem2dc);
 		EndPaint(hwnd, &ps);
@@ -642,23 +660,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 				tmp++;
 				break;
 			}
- 			
-			int xPos = iter->getX();
-			int yPos = iter->getY();
-			int rtype = iter->getType();
-			switch (rtype) {
-			case click::left:
-				ClickBlank(hwnd, xPos, yPos);
-				break;
-			case click::right:
-				ClickFlag(xPos, yPos, mine_num);
-				break;
-			case click::both:
-				ClickLR(hwnd, xPos, yPos, t_num, f_num);
-				SetTimer(hwnd, 5, 200, NULL);
-				break;
-			}
-			
+			getReplay(iter, hwnd, t_num, f_num, mine_num);
 			iter += 1;
 			tmp++;
 		}
@@ -703,29 +705,84 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 			replayMode = false;
 			break;
 		case ID_REPLAY_SLOT1:
-			replay.fileOpen("replay1.txt");
+			if (!replay.fileOpen("replay1.txt")) {
+				MessageBox(hwnd, L"리플레이 파일이\n존재하지않습니다.", L"에러", MB_OK);
+				break;
+			}
 			inputData = replay.getInput();
 			index = 0;
 			tmp = inputData[0].getTime();
 			iter = inputData.begin();
 			type = gameType::nowReplay;
 			SetLevel(replay.getLevel(), hwnd, buttonHwnd, mine_num, type);
-			buttonHwnd[0] = CreateWindow(TEXT("button"), TEXT("←"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right/2-58, 20, 25, 25, hwnd, (HMENU)0, g_hInst, NULL);
-			buttonHwnd[1] = CreateWindow(TEXT("button"), TEXT("→"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right/2+20, 20, 25, 25, hwnd, (HMENU)1, g_hInst, NULL);
-			buttonHwnd[2] = CreateWindow(TEXT("button"), TEXT("재생"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right-60, 20, 45, 25, hwnd, (HMENU)2, g_hInst, NULL);
-			buttonHwnd[3] = CreateWindow(TEXT("button"), TEXT("정지"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right-60, 50, 45, 25, hwnd, (HMENU)3, g_hInst, NULL);
-			SetTimer(hwnd, 4, 1000, NULL);
+			buttonHwnd[0] = CreateWindow(TEXT("button"), TEXT("←"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right / 2 - 58, 20, 25, 25, hwnd, (HMENU)ID_BUTTON_PREV, g_hInst, NULL);
+			buttonHwnd[1] = CreateWindow(TEXT("button"), TEXT("→"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right / 2 + 20, 20, 25, 25, hwnd, (HMENU)ID_BUTTON_NEXT, g_hInst, NULL);
+			buttonHwnd[2] = CreateWindow(TEXT("button"), TEXT("재생"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right - 60, 20, 45, 25, hwnd, (HMENU)ID_BUTTON_PLAY, g_hInst, NULL);
+			buttonHwnd[3] = CreateWindow(TEXT("button"), TEXT("정지"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right - 60, 50, 45, 25, hwnd, (HMENU)ID_BUTTON_STOP, g_hInst, NULL);
 			replayMode = true;
 			break;
 		case ID_REPLAY_SLOT2:
-			replay.fileOpen("replay2.txt");
+			if (!replay.fileOpen("replay2.txt")) {
+				MessageBox(hwnd, L"리플레이 파일이\n존재하지않습니다.", L"에러", MB_OK);
+				break;
+			}
+			inputData = replay.getInput();
+			index = 0;
+			tmp = inputData[0].getTime();
+			iter = inputData.begin();
 			type = gameType::nowReplay;
+			SetLevel(replay.getLevel(), hwnd, buttonHwnd, mine_num, type);
+			buttonHwnd[0] = CreateWindow(TEXT("button"), TEXT("←"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right / 2 - 58, 20, 25, 25, hwnd, (HMENU)ID_BUTTON_PREV, g_hInst, NULL);
+			buttonHwnd[1] = CreateWindow(TEXT("button"), TEXT("→"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right / 2 + 20, 20, 25, 25, hwnd, (HMENU)ID_BUTTON_NEXT, g_hInst, NULL);
+			buttonHwnd[2] = CreateWindow(TEXT("button"), TEXT("재생"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right - 60, 20, 45, 25, hwnd, (HMENU)ID_BUTTON_PLAY, g_hInst, NULL);
+			buttonHwnd[3] = CreateWindow(TEXT("button"), TEXT("정지"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right - 60, 50, 45, 25, hwnd, (HMENU)ID_BUTTON_STOP, g_hInst, NULL);
 			replayMode = true;
 			break;
 		case ID_REPLAY_SLOT3:
-			replay.fileOpen("replay3.txt");
+			if (!replay.fileOpen("replay3.txt")) {
+				MessageBox(hwnd, L"리플레이 파일이\n존재하지않습니다.", L"에러", MB_OK);
+				break;
+			}
+			inputData = replay.getInput();
+			index = 0;
+			tmp = inputData[0].getTime();
+			iter = inputData.begin();
 			type = gameType::nowReplay;
+			SetLevel(replay.getLevel(), hwnd, buttonHwnd, mine_num, type);
+			buttonHwnd[0] = CreateWindow(TEXT("button"), TEXT("←"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right / 2 - 58, 20, 25, 25, hwnd, (HMENU)ID_BUTTON_PREV, g_hInst, NULL);
+			buttonHwnd[1] = CreateWindow(TEXT("button"), TEXT("→"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right / 2 + 20, 20, 25, 25, hwnd, (HMENU)ID_BUTTON_NEXT, g_hInst, NULL);
+			buttonHwnd[2] = CreateWindow(TEXT("button"), TEXT("재생"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right - 60, 20, 45, 25, hwnd, (HMENU)ID_BUTTON_PLAY, g_hInst, NULL);
+			buttonHwnd[3] = CreateWindow(TEXT("button"), TEXT("정지"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right - 60, 50, 45, 25, hwnd, (HMENU)ID_BUTTON_STOP, g_hInst, NULL);
 			replayMode = true;
+			break;
+		case ID_BUTTON_NEXT:
+			if (replayRun)
+				break;
+			if (iter != inputData.end() - 1) {
+				iter++;
+				getReplay(iter, hwnd, t_num, f_num, mine_num);
+			}
+
+			break;
+		case ID_BUTTON_PREV:
+			if (replayRun)
+				break;
+			if (iter != inputData.begin()) {
+				iter--;
+				getReplay(iter, hwnd, t_num, f_num, mine_num);
+			}
+			break;
+		case ID_BUTTON_PLAY:
+			if (!replayRun) {
+				SetTimer(hwnd, 4, 1000, NULL);
+				replayRun = true;;
+			}
+			break;
+		case ID_BUTTON_STOP:
+			if (replayRun) {
+				KillTimer(hwnd, 4);
+				replayRun = false;
+			}
 			break;
 		}
 		InvalidateRgn(hwnd, NULL, false);
@@ -734,5 +791,6 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		PostQuitMessage(0);
 		break;
 	}
+
 	return(DefWindowProc(hwnd,iMsg,wParam,lParam));
 }

@@ -134,7 +134,7 @@ void CheckBlank( int i, int j)
 }
 void gameover(HWND hwnd, int select)
 {
-	KillTimer(hwnd, 2);
+	//KillTimer(hwnd, 2);
 	KillTimer(hwnd, 3);
 	for(int i=0; i<Ynum; i++) {
 		for(int j=0; j<Xnum; j++) {
@@ -302,7 +302,7 @@ void setReplay() {
 }
 
 ////////////////////////////
-void SetLevel(int level, HWND& hwnd, int& time, int& mine_num, int type) {
+void SetLevel(int level, HWND& hwnd, HWND* button, int& mine_num, int type) {
 	switch (level)
 	{
 	case 1:
@@ -333,6 +333,10 @@ void SetLevel(int level, HWND& hwnd, int& time, int& mine_num, int type) {
 		mine_num = mine = 99;
 		break;
 	}
+	for (int i = 0; i < 4; ++i) {
+		if(button[i])
+			DestroyWindow(button[i]);
+	}
 	SetNewMap(hwnd);
 	if (type == gameType::nowPlay) {
 		replay.saveLevel(level);
@@ -341,11 +345,12 @@ void SetLevel(int level, HWND& hwnd, int& time, int& mine_num, int type) {
 	else {
 		setReplay();
 	}
+	KillTimer(hwnd, 4);
 	
-	KillTimer(hwnd, 2);
-	time = 0;
+	//KillTimer(hwnd, 2);
+	//time = 0;
 	mine_num = mine;
-	SetTimer(hwnd, 2, 1000, NULL);
+	//SetTimer(hwnd, 2, 1000, NULL);
 	SetTimer(hwnd, 3, 70, NULL);
 }
 
@@ -354,9 +359,9 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 	static HDC hdc, mem1dc, mem2dc, mem3dc, mem4dc;
 	static HBITMAP hBit1, BackGround, oldBit1, oldBit2, oldBit3, oldBit4;
 	static RECT rectView;
-	static HBITMAP tile, Btile, one, two, three, four, five, six, seven, eight, MINE, flag, failflag, boom, timer, nmine, smile, smile2, mouse;
+	static HBITMAP tile, Btile, one, two, three, four, five, six, seven, eight, MINE, flag, failflag, boom, nmine, smile, smile2, mouse;
 	int t_num=0, f_num=0;
-	static int level=1, temp=0, mine_num=0, mx, my,time=0, check=0;
+	static int level=1, temp=0, mine_num=0, mx, my, check=0;
 	static bool statue, select;
 	static TCHAR buf[10], buf2[10];
 	PAINTSTRUCT ps; 
@@ -367,6 +372,9 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 	static int index;
 	static time_t tmp;
 
+	static HWND buttonHwnd[4];
+	static bool replayMode=false;
+	static bool replayRun=false;
 
 	switch(iMsg)
 	{
@@ -391,14 +399,14 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		MINE = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP1));
 		flag = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP12));
 		failflag = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP15));
-		timer = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP18));
+		//timer = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP18));
 		nmine = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP17));
 		smile = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP19));
 		smile2 = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP20));
 		mouse = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP21));
 		type = gameType::nowPlay;
 		index = -1;
-		SetLevel(level, hwnd, time, mine_num, type);
+		SetLevel(level, hwnd, buttonHwnd,mine_num, type);
 	}
 		break;
 	case WM_MOUSEMOVE:
@@ -440,7 +448,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		//이모티콘 누르기
 		if (my > rt.right / 2 - 20 && mx > 20 && my < rt.right / 2 + 10 && mx < 50) {
 			select = true;
-			SetLevel(level, hwnd, time, mine_num, gameType::nowPlay);
+			SetLevel(level, hwnd, buttonHwnd, mine_num, gameType::nowPlay);
 		}
 	}
 		break;
@@ -484,11 +492,11 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		
 		/*itoa(time, buf, 12);
 		itoa(mine_num, buf2, 12);*/
-		wsprintf(buf, L"%d", time);
+		//wsprintf(buf, L"%d", time);
 		wsprintf(buf2, L"%d", mine_num);
 		SetBkMode(hdc, TRANSPARENT);
-		TextOut(hdc, rt.left + 100, rt.bottom - 63, buf, lstrlen(buf));
-		TextOut(hdc, rt.right - 115, rt.bottom - 63, buf2, lstrlen(buf2));
+		//TextOut(hdc, rt.left + 100, rt.bottom - 63, buf, lstrlen(buf));
+		TextOut(hdc, rt.right/2 +10 , rt.bottom - 63, buf2, lstrlen(buf2));
 		SelectObject(mem1dc, oldBit1);
 		DeleteDC(mem2dc);
 		EndPaint(hwnd, &ps);
@@ -582,10 +590,10 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 					}
 				}
 			}
-			oldBit4 = (HBITMAP)SelectObject(mem4dc, timer);
-			TransparentBlt(mem1dc, rt.left + 60, rt.bottom - 70, 30, 30, mem4dc, 0, 0, 80, 80, RGB(107, 174, 255));
+			/*oldBit4 = (HBITMAP)SelectObject(mem4dc, timer);
+			TransparentBlt(mem1dc, rt.left + 60, rt.bottom - 70, 30, 30, mem4dc, 0, 0, 80, 80, RGB(107, 174, 255));*/
 			oldBit4 = (HBITMAP)SelectObject(mem4dc, nmine);
-			TransparentBlt(mem1dc, rt.right - 90, rt.bottom - 70, 30, 30, mem4dc, 0, 0, 80, 80, RGB(107, 174, 255));
+			TransparentBlt(mem1dc, rt.right/2-30, rt.bottom - 70, 30, 30, mem4dc, 0, 0, 80, 80, RGB(107, 174, 255));
 			if (select == false) {
 				oldBit4 = (HBITMAP)SelectObject(mem4dc, smile);
 				TransparentBlt(mem1dc, rt.right / 2 - 20, 20, 30, 30, mem4dc, 0, 0, 595, 595, RGB(255, 255, 255));
@@ -603,11 +611,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		}
 		break;
 		case 2: //타이머
-		{
-			time++;
-			if (time == 999)
-				time += 0;
-		}
+		
 		break;
 		case 3: //랜더링
 		{
@@ -629,7 +633,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		break;
 		case 4: //리플레이
 		{
-			if (iter == inputData.end()-1)
+			if (iter >= inputData.end()-1)
 				KillTimer(hwnd, 4);
 			if (tmp > iter->getTime()) {
 				tmp = iter->getTime();
@@ -674,7 +678,8 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		switch(wParam)
 		{
 		case ID_NEW:
-			SetLevel(level, hwnd, time, mine_num, gameType::nowPlay);
+			SetLevel(level, hwnd, buttonHwnd, mine_num, gameType::nowPlay);
+			replayMode = false;
 			break;
 		case ID_EXIT:
 			PostQuitMessage(0);
@@ -682,17 +687,20 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		case ID_EASY:
 			level=1;
 			type = gameType::nowPlay;
-			SetLevel(level, hwnd, time, mine_num, type);
+			SetLevel(level, hwnd, buttonHwnd, mine_num, type);
+			replayMode = false;
 			break;
 		case ID_MEDIUM:
 			level=2;
 			type = gameType::nowPlay;
-			SetLevel(level, hwnd, time, mine_num, type);
+			SetLevel(level, hwnd, buttonHwnd, mine_num, type);
+			replayMode = false;
 			break;
 		case ID_HARD:
 			level=3;
 			type = gameType::nowPlay;
-			SetLevel(level, hwnd, time, mine_num, type);
+			SetLevel(level, hwnd, buttonHwnd, mine_num, type);
+			replayMode = false;
 			break;
 		case ID_REPLAY_SLOT1:
 			replay.fileOpen("replay1.txt");
@@ -701,16 +709,23 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 			tmp = inputData[0].getTime();
 			iter = inputData.begin();
 			type = gameType::nowReplay;
-			SetLevel(replay.getLevel(), hwnd, time, mine_num, type);
+			SetLevel(replay.getLevel(), hwnd, buttonHwnd, mine_num, type);
+			buttonHwnd[0] = CreateWindow(TEXT("button"), TEXT("←"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right/2-58, 20, 25, 25, hwnd, (HMENU)0, g_hInst, NULL);
+			buttonHwnd[1] = CreateWindow(TEXT("button"), TEXT("→"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right/2+20, 20, 25, 25, hwnd, (HMENU)1, g_hInst, NULL);
+			buttonHwnd[2] = CreateWindow(TEXT("button"), TEXT("재생"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right-60, 20, 45, 25, hwnd, (HMENU)2, g_hInst, NULL);
+			buttonHwnd[3] = CreateWindow(TEXT("button"), TEXT("정지"), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, rt.right-60, 50, 45, 25, hwnd, (HMENU)3, g_hInst, NULL);
 			SetTimer(hwnd, 4, 1000, NULL);
+			replayMode = true;
 			break;
 		case ID_REPLAY_SLOT2:
 			replay.fileOpen("replay2.txt");
 			type = gameType::nowReplay;
+			replayMode = true;
 			break;
 		case ID_REPLAY_SLOT3:
 			replay.fileOpen("replay3.txt");
 			type = gameType::nowReplay;
+			replayMode = true;
 			break;
 		}
 		InvalidateRgn(hwnd, NULL, false);

@@ -7,7 +7,7 @@
 LRESULT CALLBACK WndProc(HWND,UINT,WPARAM,LPARAM);
 
 HINSTANCE g_hInst;
-LPSTR lpszClass="first";
+LPCWSTR lpszClass=L"first";
 
 RECT rt = { 0, 0, 280, 340 };
 
@@ -30,7 +30,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance
 	WndClass.hIcon=LoadIcon(NULL,IDI_APPLICATION);
 	WndClass.hInstance=hInstance;
 	WndClass.lpfnWndProc=(WNDPROC)WndProc;
-	WndClass.lpszClassName=lpszClass;
+	WndClass.lpszClassName = lpszClass;
 	WndClass.lpszMenuName=MAKEINTRESOURCE(IDR_MENU1);
 	WndClass.style=CS_HREDRAW | CS_VREDRAW;
 	RegisterClass(&WndClass);
@@ -146,12 +146,14 @@ void gameover(HWND hwnd, int select)
 	switch(select)
 	{
 	case 1:
-		if (MessageBox(hwnd, "리플레이를\n저장하시겠습니까?", "패배 - 지뢰를 밟았습니다.", MB_YESNO) == IDYES) {
-			
+		if (MessageBox(hwnd, L"리플레이를\n저장하시겠습니까?", L"패배 - 지뢰를 밟았습니다.", MB_YESNO) == IDYES) {
+			replay.fileSave("replay1.txt");
 		}
 		break;
 	case 2:
-		MessageBox(hwnd, "리플레이를\n저장하시겠습니까?", "패배 - 잘못된 곳에 지뢰를 선택", MB_YESNO);
+		if (MessageBox(hwnd, L"리플레이를\n저장하시겠습니까?", L"패배 - 잘못된 곳에 지뢰를 선택", MB_YESNO) == IDYES) {
+			replay.fileSave("replay1.txt");
+		}
 		break;
 	}
 	
@@ -178,13 +180,13 @@ void result(HWND hwnd)
 	switch(select)
 	{
 	case 1:
-		MessageBox(hwnd, "리플레이를\n저장하시겠습니까?", "패배 - 잘못된 곳에 지뢰를 선택", MB_YESNO);
+		MessageBox(hwnd, L"리플레이를\n저장하시겠습니까?", L"패배 - 잘못된 곳에 지뢰를 선택", MB_YESNO);
 		break;
 	case 0:
-		MessageBox(hwnd, "리플레이를\n저장하시겠습니까?", "승리!", MB_YESNO);
+		MessageBox(hwnd, L"리플레이를\n저장하시겠습니까?", L"승리!", MB_YESNO);
 		break;
 	case 2:
-		MessageBox(hwnd, "리플레이를\n저장하시겠습니까?", "패배 - 지뢰를 밟았습니다.", MB_YESNO);
+		MessageBox(hwnd, L"리플레이를\n저장하시겠습니까?", L"패배 - 지뢰를 밟았습니다.", MB_YESNO);
 		break;
 	}
 	
@@ -235,6 +237,8 @@ void ClickLR(HWND& hwnd, int xPos, int yPos, int& t_num, int& f_num) {
 		}
 
 		else {
+			if (i + y[q] < 0 || i + y[q] >= Ynum || j + x[q] < 0 || j + x[q] >= Xnum)
+				continue;
 			if (map[i + y[q]][j + x[q]].statue == up)
 				map[i + y[q]][j + x[q]].temp = true;
 		}
@@ -354,11 +358,12 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 	int t_num=0, f_num=0;
 	static int level=1, temp=0, mine_num=0, mx, my,time=0, check=0;
 	static bool statue, select;
-	static char buf[4], buf2[2];
+	static TCHAR buf[10], buf2[10];
 	PAINTSTRUCT ps; 
 
 	static int type;
 	static vector<Data> inputData;
+	static vector<Data>::iterator iter;
 	static int index;
 	static time_t tmp;
 
@@ -477,11 +482,13 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		oldBit1 = (HBITMAP)SelectObject(mem1dc, hBit1);
 		BitBlt(hdc, 0, 0, rectView.right, rectView.bottom, mem1dc, 0, 0, SRCCOPY);
 		
-		itoa(time, buf, 10);
-		itoa(mine_num, buf2, 10);
+		/*itoa(time, buf, 12);
+		itoa(mine_num, buf2, 12);*/
+		wsprintf(buf, L"%d", time);
+		wsprintf(buf2, L"%d", mine_num);
 		SetBkMode(hdc, TRANSPARENT);
-		TextOut(hdc, rt.left + 100, rt.bottom - 63, buf, strlen(buf));
-		TextOut(hdc, rt.right - 115, rt.bottom - 63, buf2, strlen(buf2));
+		TextOut(hdc, rt.left + 100, rt.bottom - 63, buf, lstrlen(buf));
+		TextOut(hdc, rt.right - 115, rt.bottom - 63, buf2, lstrlen(buf2));
 		SelectObject(mem1dc, oldBit1);
 		DeleteDC(mem2dc);
 		EndPaint(hwnd, &ps);
@@ -622,18 +629,19 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 		break;
 		case 4: //리플레이
 		{
-
-			if (index >= inputData.size() - 2)
+			if (iter == inputData.end()-1)
 				KillTimer(hwnd, 4);
-			if (tmp == inputData[index].getTime()) {
+			if (tmp > iter->getTime()) {
+				tmp = iter->getTime();
+			}
+			if (tmp != iter->getTime()) {
 				tmp++;
-
 				break;
 			}
-			int xPos = inputData[index].getX();
-			int yPos = inputData[index].getY();
-			int rtype = inputData[index].getType();
-
+ 			
+			int xPos = iter->getX();
+			int yPos = iter->getY();
+			int rtype = iter->getType();
 			switch (rtype) {
 			case click::left:
 				ClickBlank(hwnd, xPos, yPos);
@@ -646,9 +654,9 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 				SetTimer(hwnd, 5, 200, NULL);
 				break;
 			}
-
-			if (index <= inputData.size() - 3)
-				index += 1;
+			
+			iter += 1;
+			tmp++;
 		}
 		break;
 		case 5: //리플레이
@@ -691,7 +699,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam)
 			inputData = replay.getInput();
 			index = 0;
 			tmp = inputData[0].getTime();
-			
+			iter = inputData.begin();
 			type = gameType::nowReplay;
 			SetLevel(replay.getLevel(), hwnd, time, mine_num, type);
 			SetTimer(hwnd, 4, 1000, NULL);

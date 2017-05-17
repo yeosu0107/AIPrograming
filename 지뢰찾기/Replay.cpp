@@ -16,15 +16,14 @@ Replay::Replay()
 
 Replay::~Replay()
 {
-	fileSave("Replay1.txt");
+	//fileSave("Replay1.txt");
 }
 
 void Replay::input(int type, int x, int y) {
 	auto tp = chrono::system_clock::now();
 	time_t tmp = chrono::system_clock::to_time_t(tp);
 
-	Data data(tmp, type, x, y);
-	v.push_back(data);
+	v.emplace_back(tmp, type, x, y);
 }
 
 void Replay::saveLevel(int level)
@@ -62,28 +61,33 @@ void Replay::fileOpen(string name)
 
 	for (int i = 0; i < num; ++i) {
 		in >> x >> y;
-		pair<int, int> pos = make_pair(x, y);
-		mine.push_back(pos);
+		mine.emplace_back(make_pair(x,y));
 	}
 	while (in) {
+		tmp = -1;
 		in >> tmp >> inputType >> inputX >> inputY;
-		Data data(tmp, inputType, inputX, inputY);
-		v.push_back(data);
+		if (tmp == -1)
+			break;
+		v.emplace_back(tmp, inputType, inputX, inputY);
 	}
+	in.close();
 }
 
 void Replay::fileSave(string name)
 {
 	ofstream out(name, ios::trunc);
 
-	out << level << endl;
+	out << level;
 
 	for (auto mp : mine) {
-		out << mp.first << "\t" << mp.second << endl;
+		out << endl;
+		out << mp.first << "\t" << mp.second;
 	}
 
 	for (auto p : v) {
-		out << p.getTime() << "\t" << p.getType() << "\t" << p.getX() << "\t" << p.getY();
 		out << endl;
+		out << p.getTime() << "\t" << p.getType() << "\t" << p.getX() << "\t" << p.getY();
+		
 	}
+	out.close();
 }

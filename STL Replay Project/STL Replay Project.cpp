@@ -1,6 +1,6 @@
 //#include <windows.h>
 #include "stdafx.h"
-#include <time.h>
+
 #include "resource.h"
 
 
@@ -71,13 +71,26 @@ int y[8] = { -1, -1, -1, 0, 0, 1, 1, 1 };
 int Xnum, Ynum, mine;
 grid map[30][16];
 
-enum gameType { nowPlay = 0, nowReplay };
+enum gameType { nowPlay = 0, nowReplay, checkScene };
+
+static auto tp = chrono::system_clock::now();
+static time_t start = chrono::system_clock::to_time_t(tp);
+static time_t now;
+
+struct nowscene
+{
+public:
+	time_t time;
+	int now_mine;
+	grid map[30][16];
+};
+vector<nowscene> snapShot;
 
 //게임 초기화 관련
 void CreateMap()
 {
 	int mine_num = mine;
-	srand(time(NULL));
+	//srand(time(NULL));
 	while (1)
 	{
 		for (int i = 0; i<Ynum; i++) {
@@ -138,7 +151,7 @@ void CheckBlank(int i, int j)
 }
 void gameover(HWND hwnd, int select, int type)
 {
-	//KillTimer(hwnd, 2);
+	KillTimer(hwnd, 2);
 	KillTimer(hwnd, 3);
 	for (int i = 0; i<Ynum; i++) {
 		for (int j = 0; j<Xnum; j++) {
@@ -263,13 +276,18 @@ void SetNewMap(HWND hwnd)
 
 //게임 플레이 관련
 void setReplay();
+void Replayover();
+void Replayresult();
 
 void ClickBlank(HWND& hwnd, const int& xPos, const int& yPos, const int& type) {
 	replay.input(click::left, xPos, yPos);
 	map[yPos][xPos].statue = down;
 	if (map[yPos][xPos].mine == true) {
 		map[yPos][xPos].boom = true;
-		gameover(hwnd, 1, type);
+		if (type != gameType::checkScene)
+			gameover(hwnd, 1, type);
+		else
+			Replayover();
 		return;
 	}
 	if (map[yPos][xPos].blank == true)
@@ -285,7 +303,10 @@ void ClickLR(HWND& hwnd, const int& xPos, const int& yPos, int& t_num, int& f_nu
 		if (map[i + y[q]][j + x[q]].flag == true)
 			f_num++;
 		if (map[i + y[q]][j + x[q]].mine == false && map[i + y[q]][j + x[q]].flag == true) {
-			gameover(hwnd, 2, type);
+			if (type != gameType::checkScene)
+				gameover(hwnd, 2, type);
+			else
+				Replayover();
 			return;
 		}
 
@@ -362,15 +383,21 @@ void SetLevel(int level, HWND& hwnd, int& mine_num, int type) {
 	SetNewMap(hwnd);
 	if (type == gameType::nowPlay) {
 		replay.saveLevel(level);
+		replay.input(click::startP, -1, -1);
+		SetTimer(hwnd, 2, 10, NULL);
 		CreateMap();
+		
 	}
 	else {
 		setReplay();
 	}
 	KillTimer(hwnd, 4);
-
+	tp = chrono::system_clock::now();
+	start = chrono::system_clock::to_time_t(tp);
+	now = 0;
 	mine_num = mine;
 	SetTimer(hwnd, 3, 70, NULL);
+	
 }
 ////////////////////////////
 
@@ -378,6 +405,7 @@ using vData = vector<Data>;
 
 //리플레이 관련
 void setReplay() {
+	
 	for (const auto& p : replay.getMine()) {
 		map[p.second][p.first].mine = true;
 	}
@@ -398,23 +426,26 @@ void setReplay() {
 		}
 	}
 }
-void getReplay(vData::iterator& iter, HWND& hwnd, int& t_num, int& f_num, int& mine_num) {
+void getReplay(vData::iterator& iter, HWND& hwnd, int& t_num, int& f_num, int& mine_num, int type) {
 	int xPos = iter->getX();
 	int yPos = iter->getY();
 	int rtype = iter->getType();
 	switch (rtype) {
 	case click::left:
-		ClickBlank(hwnd, xPos, yPos, gameType::nowReplay);
+		ClickBlank(hwnd, xPos, yPos, type);
 		break;
 	case click::right:
 		ClickFlag(xPos, yPos, mine_num);
 		break;
 	case click::both:
-		ClickLR(hwnd, xPos, yPos, t_num, f_num, gameType::nowReplay);
+		ClickLR(hwnd, xPos, yPos, t_num, f_num, type);
 		SetTimer(hwnd, 5, 200, NULL);
+		break;
+	case click::startP:
 		break;
 	}
 }
+
 void initReplay(vData& inputData, vData::iterator& iter,
 	int& type, time_t& timeCount, int& mine_num, HWND& hwnd) {
 	inputData = replay.getInput();
@@ -422,7 +453,60 @@ void initReplay(vData& inputData, vData::iterator& iter,
 	iter = inputData.begin();
 	type = gameType::nowReplay;
 	SetLevel(replay.getLevel(), hwnd, mine_num, type);
+	
+	start = iter->getTime();
+	KillTimer(hwnd, 2);
 	SetTimer(hwnd, 4, 1000, NULL);
+}
+
+void getShapShot(vData& inputData, HWND& hwnd, int& t_num, int& f_num, int& mine_num) {
+	vData::iterator iter = inputData.begin();
+	while (iter != inputData.end()) {
+		getReplay(iter, hwnd, t_num, f_num, mine_num, gameType::checkScene);
+		nowscene tmp;
+		for (int i = 0; i < 30; ++i)
+			for (int j = 0; j < 16; ++j)
+				tmp.map[i][j] = map[i][j];
+		tmp.time = iter->getTime();
+		tmp.now_mine = mine_num;
+		snapShot.emplace_back(tmp);
+		iter += 1;
+	}
+	for (int i = 0; i < 30; ++i)
+		for (int j = 0; j < 16; ++j)
+			map[i][j] = snapShot[0].map[i][j];
+	mine_num = mine;
+}
+
+void Replayover()
+{
+	for (int i = 0; i<Ynum; i++) {
+		for (int j = 0; j<Xnum; j++) {
+			if (map[i][j].mine == false && map[i][j].flag == true)
+				map[i][j].error = true;
+			map[i][j].statue = down;
+		}
+	}
+}
+void Replayresult()
+{
+	int select = 0;
+	for (int i = 0; i<Ynum; i++) {
+		for (int j = 0; j<Xnum; j++) {
+			if (map[i][j].flag == true && map[i][j].mine == false) {
+				select = 1;
+				break;
+			}
+			if (map[i][j].boom == true) {
+				select = 2;
+				break;
+			}
+		}
+		if (select == 1 || select == 2)
+			break;
+	}
+
+
 }
 ////////////////////////////
 
@@ -436,13 +520,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	int t_num = 0, f_num = 0;
 	static int level = 1, temp = 0, mine_num = 0, mx, my, check = 0;
 	static bool statue, select;
-	static TCHAR buf[10];
+	static TCHAR buf[10], buf2[20];
 	PAINTSTRUCT ps;
 
 	static int type;
 	static vData inputData;
 	static vData::iterator iter;
-
+	
 	static time_t timeCount;
 
 	switch (iMsg)
@@ -572,10 +656,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		mem1dc = CreateCompatibleDC(hdc);
 		oldBit1 = (HBITMAP)SelectObject(mem1dc, hBit1);
 		BitBlt(hdc, 0, 0, rectView.right, rectView.bottom, mem1dc, 0, 0, SRCCOPY);
-
+		wsprintf(buf2, L"time : %d", now);
 		wsprintf(buf, L"%d", mine_num);
 		SetBkMode(hdc, TRANSPARENT);
 		TextOut(hdc, rt.right / 2 + 10, rt.bottom - 63, buf, lstrlen(buf));
+		TextOut(hdc, rt.right / 2 + 50, rt.bottom - 63, buf2, lstrlen(buf2));
 		SelectObject(mem1dc, oldBit1);
 		DeleteDC(mem2dc);
 		EndPaint(hwnd, &ps);
@@ -690,7 +775,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 		case 2: //타이머
-
+			tp = chrono::system_clock::now();
+			now = chrono::system_clock::to_time_t(tp)- start;
 			break;
 		case 3: //랜더링
 		{
@@ -702,7 +788,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 						break;
 					}
 					if (i == Ynum - 1 && j == Xnum - 1) {
-						result(hwnd, type);
+						if (type != gameType::checkScene)
+							result(hwnd, type);
+						else
+							Replayresult();
 					}
 				}
 				if (temp == 1)
@@ -712,22 +801,27 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		break;
 		case 4: //리플레이
 		{
-			if (timeCount > iter->getTime()) {
-				timeCount = iter->getTime();
-			}
-			if (timeCount != iter->getTime()) {
+			int tmpp = iter->getTime();
+			now = timeCount - start;
+			
+			if (timeCount != tmpp) {
 				timeCount++;
 				break;
 			}
 			if (iter >= inputData.end() - 1) {
 				KillTimer(hwnd, 4);
-				//type = gameType::nowPlay;
-				//break;
+				getReplay(iter, hwnd, t_num, f_num, mine_num, gameType::nowReplay);
+				break;
 			}
-			
-			getReplay(iter, hwnd, t_num, f_num, mine_num);
+			getReplay(iter, hwnd, t_num, f_num, mine_num, gameType::nowReplay);
 			iter += 1;
+			if (iter->getTime() == tmpp) {
+				getReplay(iter, hwnd, t_num, f_num, mine_num, gameType::nowReplay);
+				
+				iter += 1;
+			}
 			timeCount++;
+			break;
 		}
 		break;
 		case 5: //리플레이
@@ -772,6 +866,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			initReplay(inputData, iter, type, timeCount, mine_num, hwnd);
+			getShapShot(inputData, hwnd, t_num, f_num, mine_num);
+
 			break;
 		case ID_REPLAY_SLOT2:
 			if (!replay.fileOpen("replay2.txt")) {
@@ -779,6 +875,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			initReplay(inputData, iter, type, timeCount, mine_num, hwnd);
+			getShapShot(inputData, hwnd, t_num, f_num, mine_num);
+			
 			break;
 		case ID_REPLAY_SLOT3:
 			if (!replay.fileOpen("replay3.txt")) {
@@ -786,6 +884,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			initReplay(inputData, iter, type, timeCount, mine_num, hwnd);
+			getShapShot(inputData, hwnd, t_num, f_num, mine_num);
+
 			break;
 		}
 		InvalidateRgn(hwnd, NULL, false);

@@ -1,9 +1,11 @@
 #pragma once
 #include <vector>
 #include <utility>
+#include <ctime>
+#include <chrono>
 using namespace std;
 
-enum click { left = 0, right = 1, both = 2 };
+enum click { left = 0, right = 1, both = 2, startP=3 };
 
 
 class Data

@@ -1,21 +1,7 @@
-
-
 #include <fstream>
-#include "Replay.h"
+#include "stdafx.h"
+//#include "Replay.h"
 
-
-
-
-Replay::Replay()
-{
-	
-}
-
-
-Replay::~Replay()
-{
-	//fileSave("Replay1.txt");
-}
 
 void Replay::input(int type, int x, int y) {
 	auto tp = chrono::system_clock::now();
@@ -30,9 +16,6 @@ void Replay::saveLevel(int level)
 	v.clear();
 	mine.clear();
 }
-
-
-
 
 void Replay::saveMine(int xPos, int yPos)
 {
@@ -91,4 +74,59 @@ void Replay::fileSave(string name)
 		
 	}
 	out.close();
+}
+
+void setReplay() {
+
+	for (const auto& p : replay.getMine()) {
+		map[p.second][p.first].mine = true;
+	}
+
+	for (int i = 0; i<Ynum; i++)
+	{
+		for (int j = 0; j<Xnum; j++)
+		{
+			for (int q = 0; q<8; q++)
+			{
+				if (i + y[q] >= 0 && i + y[q] <= Ynum && j + x[q] >= 0 && j + x[q] <= Xnum)
+					if (map[i][j].mine == false && map[i + y[q]][j + x[q]].mine == true)
+						map[i][j].num++;
+
+			}
+			if (map[i][j].num == 0 && map[i][j].mine == false)
+				map[i][j].blank = true;
+		}
+	}
+}
+void getReplay(vData::iterator& iter, HWND& hwnd, int& t_num, int& f_num, int& mine_num, int type) {
+	int xPos = iter->getX();
+	int yPos = iter->getY();
+	int rtype = iter->getType();
+	switch (rtype) {
+	case click::left:
+		ClickBlank(hwnd, xPos, yPos, type);
+		break;
+	case click::right:
+		ClickFlag(xPos, yPos, mine_num);
+		break;
+	case click::both:
+		ClickLR(hwnd, xPos, yPos, t_num, f_num, type);
+		SetTimer(hwnd, 5, 200, NULL);
+		break;
+	case click::startP:
+		break;
+	}
+}
+
+void initReplay(vData& inputData, vData::iterator& iter,
+	int& type, time_t& timeCount, int& mine_num, HWND& hwnd) {
+	inputData = replay.getInput();
+	timeCount = inputData[0].getTime();
+	iter = inputData.begin();
+	type = gameType::nowReplay;
+	SetLevel(replay.getLevel(), hwnd, mine_num, type);
+
+	start = iter->getTime();
+	KillTimer(hwnd, 2);
+	SetTimer(hwnd, 4, 1000, NULL);
 }

@@ -3,6 +3,7 @@
 #include <utility>
 #include <ctime>
 #include <chrono>
+
 using namespace std;
 
 enum click { left = 0, right = 1, both = 2, startP=3 };
@@ -25,7 +26,7 @@ public:
 	int getX() const { return xPos; }
 	int getY() const { return yPos; }
 };
-
+using vData = vector<Data>;
 class Replay
 {
 private:
@@ -35,8 +36,8 @@ private:
 	
 
 public:
-	Replay();
-	~Replay();
+	Replay() {}
+	~Replay() {}
 
 	void input(int type, int x, int y);
 	void saveLevel(int level);
@@ -50,3 +51,7 @@ public:
 	void fileSave(string name);
 };
 
+void setReplay();
+void getReplay(vData::iterator& iter, HWND& hwnd, int& t_num, int& f_num, int& mine_num, int type);
+void initReplay(vData& inputData, vData::iterator& iter,
+	int& type, time_t& timeCount, int& mine_num, HWND& hwnd);

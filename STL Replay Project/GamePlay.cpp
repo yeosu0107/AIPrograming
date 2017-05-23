@@ -4,7 +4,7 @@
 void CreateMap()
 {
 	int mine_num = mine;
-	//srand(time(NULL));
+	srand(time(NULL));
 	while (1)
 	{
 		for (int i = 0; i<Ynum; i++) {

@@ -8,11 +8,11 @@
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 
-LPCWSTR lpszClass = L"first";
+LPCWSTR lpszClass = L"지뢰찾기";
 
 
 Replay	replay;
-grid		map[30][16];
+grid	map[30][16];
 HWND	slotHwnd;
 HINSTANCE g_hInst;
 RECT rt = { 0, 0, 280, 340 };
@@ -28,8 +28,10 @@ time_t now;
 
 INT_PTR CALLBACK SlotProc(HWND, UINT, WPARAM, LPARAM);
 
-
-
+struct tData {
+	grid map[30][16];
+};
+vector<tData> Scene;
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance
 	, LPSTR lpszCmdParam, int nCmdShow)
 {
@@ -87,14 +89,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	static vData::iterator iter;
 	
 	static time_t timeCount;
+	tData gridData;
 
+	static bool replayWork = false;
+	static size_t replayIndex = -1;
+	
 	switch (iMsg)
 	{
 	case WM_CREATE:
 	{
 		GetClientRect(hwnd, &rectView);
 		SetTimer(hwnd, 1, 70, NULL);
-
+		
 		select = false;
 		//배경화면
 		BackGround = LoadBitmap(((LPCREATESTRUCT)lParam)->hInstance, MAKEINTRESOURCE(IDB_BITMAP1));
@@ -225,6 +231,52 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		EndPaint(hwnd, &ps);
 	}
 	return 0;
+	case WM_KEYDOWN:
+	{
+		switch (wParam) {
+		case VK_LEFT:
+			if (!replayWork) {
+				if (iter == inputData.begin())
+					break;
+				iter -= 1;
+				int tmpp = iter->getTime();
+				now = tmpp - start;
+				replayIndex = iter - inputData.begin();
+				copy(&Scene[replayIndex].map[0][0], &Scene[replayIndex].map[16][30], &map[0][0]);
+			}
+			break;
+		case VK_RIGHT:
+			if (!replayWork) {
+				if (iter == inputData.end()-1)
+					break;
+				int tmpp = iter->getTime();
+				now = tmpp - start;
+				replayIndex = iter - inputData.begin();
+				getReplay(iter, hwnd, t_num, f_num, mine_num, gameType::nowReplay);
+				if (Scene.size() < replayIndex + 1) {
+					copy(&map[0][0], &map[16][30], &gridData.map[0][0]);
+					Scene.emplace_back(gridData);
+				}
+				iter += 1;
+				
+			}
+
+			break;
+		case VK_RETURN:
+			if (replayWork) {
+				replayWork = false;
+				KillTimer(hwnd, 4);
+			}
+			else {
+				replayWork = true; 
+				timeCount = now + start;
+				SetTimer(hwnd, 4, 1000, NULL);
+			}
+			break;
+		}
+		InvalidateRgn(hwnd, NULL, false);
+	}
+	break;
 	case WM_TIMER:
 		GetClientRect(hwnd, &rectView);
 		switch (wParam)
@@ -359,7 +411,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		{
 			int tmpp = iter->getTime();
 			now = timeCount - start;
-			
+			replayIndex = iter - inputData.begin();
+
 			if (timeCount != tmpp) {
 				timeCount++;
 				break;
@@ -367,10 +420,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 			if (iter >= inputData.end() - 1) {
 				KillTimer(hwnd, 4);
 				getReplay(iter, hwnd, t_num, f_num, mine_num, gameType::nowReplay);
-				timeCount++;
+				copy(&map[0][0], &map[16][30], &gridData.map[0][0]);
+				Scene.emplace_back(gridData);
+				replayWork = false;
 				break;
 			}
 			getReplay(iter, hwnd, t_num, f_num, mine_num, gameType::nowReplay);
+			copy(&map[0][0], &map[16][30], &gridData.map[0][0]);
+			Scene.emplace_back(gridData);
 			iter += 1;
 			if (iter->getTime() != tmpp) 
 				timeCount++;
@@ -417,6 +474,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			initReplay(inputData, iter, type, timeCount, mine_num, hwnd);
+			replayWork = true;
 			break;
 		case ID_REPLAY_SLOT2:
 			if (!replay.fileOpen("replay2.txt")) {
@@ -424,6 +482,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			initReplay(inputData, iter, type, timeCount, mine_num, hwnd);		
+			replayWork = true;
 			break;
 		case ID_REPLAY_SLOT3:
 			if (!replay.fileOpen("replay3.txt")) {
@@ -431,6 +490,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			initReplay(inputData, iter, type, timeCount, mine_num, hwnd);
+			replayWork = true;
 			break;
 		}
 		InvalidateRgn(hwnd, NULL, false);

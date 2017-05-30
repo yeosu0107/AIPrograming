@@ -81,7 +81,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	int t_num = 0, f_num = 0;
 	static int level = 1, temp = 0, mine_num = 0, mx, my, check = 0;
 	static bool statue, select;
-	static TCHAR buf[10], buf2[20];
+	static TCHAR buf[10], buf2[25], buf3[20], buf4[20], buf5[20];
 	PAINTSTRUCT ps;
 
 	static int type;
@@ -221,11 +221,29 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		mem1dc = CreateCompatibleDC(hdc);
 		oldBit1 = (HBITMAP)SelectObject(mem1dc, hBit1);
 		BitBlt(hdc, 0, 0, rectView.right, rectView.bottom, mem1dc, 0, 0, SRCCOPY);
+		if (type == gameType::nowReplay) {
+			if(replayWork)
+				wsprintf(buf3, L"Enter : stop");
+			else {
+				wsprintf(buf3, L"Enter : play");
+				wsprintf(buf4, L"Right : next");
+				wsprintf(buf5, L"Left  : prev");
+			}
+		}
 		wsprintf(buf2, L"time : %d", now);
 		wsprintf(buf, L"%d", mine_num);
 		SetBkMode(hdc, TRANSPARENT);
 		TextOut(hdc, rt.right / 2 + 10, rt.bottom - 63, buf, lstrlen(buf));
 		TextOut(hdc, rt.right / 2 + 50, rt.bottom - 63, buf2, lstrlen(buf2));
+		if (type == gameType::nowReplay) {
+			if (replayWork)
+				TextOut(hdc, rt.right / 2 + 20, rt.top + 60, buf3, lstrlen(buf3));
+			else {
+				TextOut(hdc, rt.right / 2 + 20, rt.top + 40, buf3, lstrlen(buf3));
+				TextOut(hdc, rt.right / 2 + 20, rt.top + 60, buf4, lstrlen(buf4));
+				TextOut(hdc, rt.right / 2 + 20, rt.top + 80, buf5, lstrlen(buf5));
+			}
+		}
 		SelectObject(mem1dc, oldBit1);
 		DeleteDC(mem2dc);
 		EndPaint(hwnd, &ps);
@@ -235,19 +253,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (wParam) {
 		case VK_LEFT:
-			if (!replayWork) {
+			if (!replayWork && type==gameType::nowReplay) {
 				if (iter == inputData.begin())
 					break;
 				iter -= 1;
 				int tmpp = iter->getTime();
 				now = tmpp - start;
 				replayIndex = iter - inputData.begin();
+				getReplay(iter, hwnd, t_num, f_num, mine_num, gameType::nowReplay);
 				copy(&Scene[replayIndex].map[0][0], &Scene[replayIndex].map[16][30], &map[0][0]);
 			}
 			break;
 		case VK_RIGHT:
-			if (!replayWork) {
-				if (iter == inputData.end()-1)
+			if (!replayWork && type==gameType::nowReplay) {
+				if (iter == inputData.end())
 					break;
 				int tmpp = iter->getTime();
 				now = tmpp - start;
@@ -263,14 +282,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 
 			break;
 		case VK_RETURN:
-			if (replayWork) {
-				replayWork = false;
-				KillTimer(hwnd, 4);
-			}
-			else {
-				replayWork = true; 
-				timeCount = now + start;
-				SetTimer(hwnd, 4, 1000, NULL);
+			if (type==gameType::nowReplay) {
+				if (replayWork) {
+					replayWork = false;
+					KillTimer(hwnd, 4);
+				}
+				else {
+					replayWork = true;
+					timeCount = now + start;
+					SetTimer(hwnd, 4, 1000, NULL);
+				}
 			}
 			break;
 		}
@@ -409,6 +430,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam)
 		break;
 		case 4: //리플레이
 		{
+			if (type!=gameType::nowReplay) {
+				KillTimer(hwnd, 4);
+				break;
+			}
 			int tmpp = iter->getTime();
 			now = timeCount - start;
 			replayIndex = iter - inputData.begin();

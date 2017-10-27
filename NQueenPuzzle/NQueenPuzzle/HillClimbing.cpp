@@ -114,7 +114,7 @@ void HillClimbing::Search()
 			m_Board->setQueen(i, save[index].first, save[index].second);
 			save.clear();
 			count++;
-			result++;
+			
 			DWORD currTime = timeGetTime() * 0.001;
 
 			//최대 검색 시간 1분
@@ -126,6 +126,7 @@ void HillClimbing::Search()
 			switch (m_option) {
 			case OPTION::Base:
 				if (nowCost == prevCost) {
+					std::cout << "언덕오르기 결과" << std::endl;
 					if (nowCost == 0) {
 						std::cout << std::endl << "총 " << result << "번 만에 찾았습니다." << std::endl;
 						m_Board->printBoard();
@@ -137,11 +138,12 @@ void HillClimbing::Search()
 				}
 				break;
 			case OPTION::autoRestart:
-				if (nowCost == prevCost) {
+				if (nowCost == prevCost&& count > 10) {
 					count = 0;
 					for (int i = 0; i < m_size; ++i) {
 						m_Board->resetQueen(i, firstBoard[i].first, firstBoard[i].second);
 					}
+					result++;
 				}
 				break;
 			case OPTION::autoandSideRestart:
@@ -150,6 +152,7 @@ void HillClimbing::Search()
 					for (int i = 0; i < m_size; ++i) {
 						m_Board->resetQueen(i, firstBoard[i].first, firstBoard[i].second);
 					}
+					result++;
 				}
 				break;
 			}
@@ -159,6 +162,14 @@ void HillClimbing::Search()
 		
 		
 	}
-	std::cout << std::endl<<"총 " <<result <<"번 만에 찾았습니다." <<std::endl;
+	switch (m_option) {
+	case OPTION::autoRestart:
+		std::cout << "언덕오르기 무작위 재시작 결과" << std::endl;
+		break;
+	case OPTION::autoandSideRestart:
+		std::cout << "언덕오르기 무작위 재시작 및 횡이동 적용 결과" << std::endl;
+		break;
+	}
+	std::cout << std::endl<<"총 " <<result <<"번 재시작해서 찾았습니다." <<std::endl;
 	m_Board->printBoard();
 }

@@ -1,133 +1,60 @@
 #include "AStar.h"
-#include <math.h>
-#include <queue>
+#include "stdafx.h"
 
-AStar::AStar(int size, Board* board) :
-	m_size(size), iSource(board)
+#include <algorithm>
+
+using namespace std;
+
+AStar::AStar(int size) :
+	m_size(size) 
 {
-	//전체 자식노드의 수는 사이즈의 제곱이다.
-	m_To = new int[(int)pow(m_size,m_size)];
-	m_From = new int[(int)pow(m_size, m_size)];
-	m_Gcost = new int[(int)pow(m_size, m_size)];
-	m_Fcost = new int[(int)pow(m_size, m_size)];
 
-	memset(m_To, -1,sizeof(int) * (int)pow(m_size, m_size));
-	memset(m_From, -1, sizeof(int) * (int)pow(m_size, m_size));
-
-	memset(m_Gcost, -1, sizeof(int) * (int)pow(m_size, m_size));
-	memset(m_Fcost, -1, sizeof(int) * (int)pow(m_size, m_size));
-
-	m_PathTree = new Board*[(int)pow(m_size, m_size)];
-	m_SearchFrontier = new Board*[(int)pow(m_size, m_size)];
-
-	memset(m_PathTree, 0, sizeof(Board*)* (int)pow(m_size, m_size));
-	memset(m_SearchFrontier, 0, sizeof(Board*)* (int)pow(m_size, m_size));
-
-	m_PathTree[0] = iSource;
-	m_SearchFrontier[0] = iSource;
-	
-	m_Gcost[0] = board->CollisionCheck();
-	m_Fcost[0] = board->CollisionCheck();
-
-	index = 1;
-	Search();
 }
-
 
 AStar::~AStar()
 {
-}
 
+}
 
 void AStar::Search()
 {
-	queue<pair<int,int>> pq;
-
-	pq.push(make_pair(0,0));
-
-	int saveCost = -1;
-	while (!pq.empty()) {
-		int NextClosestNode = pq.front().first; //인덱스
-		int nowCost = pq.front().second; //비용
-		pq.pop();
-
-		//m_PathTree[NextClosestNode] = m_SearchFrontier[NextClosestNode];
-		m_PathTree[NextClosestNode]->printBoard();
-		////결과 찾음
-		if (m_PathTree[NextClosestNode]->CollisionCheck() == 0) {
-			m_PathTree[NextClosestNode]->printBoard();
-			return;
-		}
-			
-
-
-		vector<pair<Board*, grape>> Node;
-		//인접노드 찾기
-		searchCloseNode(NextClosestNode, Node);
-		
-		for (const auto&pE : Node) {
-			m_PathTree[pE.second.m_index] = pE.first;
-			m_To[pE.second.m_index] = pE.second.m_To;
-			m_From[pE.second.m_index] = pE.second.m_From;
-
-			int FCost = m_Fcost[NextClosestNode];
-			int GCost = m_Gcost[NextClosestNode] + pE.first->CollisionCheck();
-			
-			int cost = FCost + GCost;
-			//코스트가 작을수록 좋은 것
-			m_Fcost[pE.second.m_index] = FCost;
-			m_Gcost[pE.second.m_index] = GCost;
-
-			if (saveCost == -1) {
-				saveCost = cost;
-				pq.push(make_pair(pE.second.m_index, cost));
-			}
-			else if (saveCost < cost) {
-				saveCost = cost;
-				pq.push(make_pair(pE.second.m_index, cost));
-			}
-		}
-	}
-	
-
-}
-
-void AStar::searchCloseNode(int NextClosestNode, vector<pair<Board*, grape>>& save) {
-	Board* m_Board = m_PathTree[NextClosestNode];
-	Queen* tmp = m_Board->getQueen();
 
 	for (int i = 0; i < m_size; ++i) {
+		Board* tBoard = new Board(m_size);
+		int index = tBoard->getNowQueen();
 
-		int save_x = tmp[i].x;
-		int save_y = tmp[i].y;
+		tBoard->resetQueen(index, i, index);
+		Cost cost(1,0);
+		tBoard->setNowQueen(index + 1);
 
-		for (int x = 0; x < m_size; ++x) {
-			int currCost = m_Board->setQueen(i, x, save_y);
-			if (currCost == -1)
-				continue;
-			save.emplace_back(make_pair(new Board(m_Board), grape(NextClosestNode, -1, index++)));
+		save.push_back(make_pair(cost,tBoard));
+	}
+
+	while (1) {
+		sort(save.begin(), save.end(), [](const pair<Cost, Board*>& pE1, const pair<Cost, Board*>pE2) {
+			return (pE1.first.m_Cost < pE2.first.m_Cost) ;
+		});
+
+		pair<Cost, Board*> now = save[0];
+		
+		save.begin() = save.erase(save.begin());
+
+		if (now.second->CollisionCheck() == 0) {
+			now.second->printBoard();
+			return;
 		}
+		if (now.first.m_hCost > m_size - 1)
+			continue;
 
-		for (int y = 0; y < m_size; ++y) {
-			int currCost = m_Board->setQueen(i, save_x, y);
-			if (currCost == -1)
-				continue;
-			save.emplace_back(make_pair(new Board(m_Board), grape(NextClosestNode, -1, index++)));
-		}
+		for (int i = 0; i < m_size; ++i) {
+			Board* tBoard = new Board(now.second);
+			int index = tBoard->getNowQueen();
 
-		int x, y;
+			tBoard->resetQueen(index, i, index);
+			Cost cost(index+1, tBoard->CollisionCheck());
+			tBoard->setNowQueen(index + 1);
 
-		for (x = save_x, y = save_y; x < m_size && y < m_size; ++x, ++y) {
-			int currCost = m_Board->setQueen(i, x, y);
-			if (currCost == -1)
-				continue;
-			save.emplace_back(make_pair(new Board(m_Board), grape(NextClosestNode, -1, index++)));
-		}
-		for (x = save_x, y = save_y; x >= m_size && y >= m_size; --x, --y) {
-			int currCost = m_Board->setQueen(i, x, y);
-			if (currCost == -1)
-				continue;
-			save.emplace_back(make_pair(new Board(m_Board), grape(NextClosestNode, -1, index++)));
+			save.push_back(make_pair(cost, tBoard));
 		}
 	}
 }

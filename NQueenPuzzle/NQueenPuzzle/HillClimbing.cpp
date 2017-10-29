@@ -138,7 +138,7 @@ void HillClimbing::Search()
 				}
 				break;
 			case OPTION::autoRestart:
-				if (nowCost == prevCost&& count > 10) {
+				if (nowCost == prevCost&& count > 2) {
 					count = 0;
 					for (int i = 0; i < m_size; ++i) {
 						m_Board->resetQueen(i, firstBoard[i].first, firstBoard[i].second);

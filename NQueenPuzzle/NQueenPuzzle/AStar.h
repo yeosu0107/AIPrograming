@@ -1,42 +1,33 @@
 #pragma once
-#include "Board.h"
 #include <vector>
-
+#include <queue>
+#include "Board.h"
 using namespace std;
 
-struct grape
+struct Cost
 {
-	int m_index;
-	int m_To;
-	int m_From;
+	int m_hCost;
+	int m_gCost;
+	int m_Cost;
 
-	grape(int from, int to, int index) {
-		m_To = to;
-		m_From = from;
-		m_index = index;
+	Cost(int h, int g) {
+		m_hCost = h;
+		m_gCost = g;
+		m_Cost = m_hCost + m_gCost;
 	}
 };
 
 class AStar
 {
 private:
-	int* m_Gcost;
-	int* m_Fcost;
-	int* m_From;
-	int* m_To;
-
-	Board** m_PathTree;
-	Board** m_SearchFrontier;
-
-
-	Board* iSource;
-
 	int m_size;
-	int index = 0;
-public:
-	AStar(int size, Board* board);
-	~AStar();
-	void Search();
-	void searchCloseNode(int NextClosestNode, vector<pair<Board*,grape>>& save);
-};
 
+	vector<pair<Cost, Board*>> save;
+	//queue<pair<Cost, Board*>> frontier;
+
+public:
+	AStar(int size);
+	~AStar();
+	
+	void Search();
+};

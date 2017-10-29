@@ -86,6 +86,28 @@ int Board::CollisionCheck()
 	return SumOfCollision;
 }
 
+int Board::CollisionCheck2()
+{
+	int SumOfCollision = 0;
+
+	for (int i = 0; i < m_size; ++i) {
+		int now_x = m_queen[i].x;
+		int now_y = m_queen[i].y;
+
+		for (int k = 0; k < m_size; ++k) {
+			if (now_x == m_queen[k].x) //같은 행에 있으면 충돌가능
+				SumOfCollision++;
+			if (now_y == m_queen[k].y) //같은 열에 있으면 충돌가능
+				SumOfCollision++;
+			if ((now_x - m_queen[k].x)*(now_x - m_queen[k].x) ==
+				(now_y - m_queen[k].y)*(now_y - m_queen[k].y)) //뺀 값이 같으면
+				SumOfCollision++;
+		}
+	}
+
+	return SumOfCollision;
+}
+
 void Board::printBoard()
 {
 	for (int i = 0; i < m_size; ++i) {

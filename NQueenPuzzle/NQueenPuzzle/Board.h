@@ -44,8 +44,12 @@ public:
 	
 	Queen* getQueen()const { return m_queen; }
 
-	int CollisionCheck(); //Queen들의 총 충돌횟수를 반환
-
+	void setNowQueen(int t) {
+		now_queen = t;
+	}
+	int getNowQueen() const { return now_queen; }
+	int CollisionCheck(); //Queen들의 총 충돌횟수를 반환, 중복체크 안함
+	int CollisionCheck2(); //중복체크함
 	void printBoard();
 };
 

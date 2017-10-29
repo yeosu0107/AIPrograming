@@ -25,17 +25,7 @@ int main(void)
 		else
 			cout <<endl<< num << "Queen 퍼즐을 생성합니다" << endl << endl;
 	}
-	//판생성
-	Board board(num);
-
-	//board.setQueen(0, 2, 0);
-	//board.setQueen(1, 0, 1);
-	//board.setQueen(2, 3, 2);
-	//board.setQueen(3, 1, 3);
-	//판에 퀸 배치
-	for (int i = 0; i < num; ++i)
-		board.resetQueen(i, i, i);
-
+	
 
 	cout << "어떤 방식으로 찾을까요?" << endl;
 	cout <<endl<< "Astar - 0" << endl << "HillClimbing - 1" << endl
@@ -49,10 +39,19 @@ int main(void)
 			cout << "다시 입력하시요" << endl;
 	}
 	cout << endl;
-	if (option == OPTION::ASTAR)
-		AStar(num, &board);
+	if (option == OPTION::ASTAR) {
+		AStar aStar(num);
+		aStar.Search();
+	}
 		
 	else {
+		//판생성
+		Board board(num);
+
+		//판에 퀸 배치
+		for (int i = 0; i < num; ++i)
+			board.resetQueen(i, i, i);
+
 		HillClimbing hill(&board, num, option);
 		hill.Search();
 	}

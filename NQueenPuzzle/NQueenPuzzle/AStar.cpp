@@ -30,7 +30,7 @@ void AStar::Search()
 		save.push_back(make_pair(cost,tBoard));
 	}
 
-	while (1) {
+	while (!save.empty()) {
 		sort(save.begin(), save.end(), [](const pair<Cost, Board*>& pE1, const pair<Cost, Board*>pE2) {
 			return (pE1.first.m_Cost < pE2.first.m_Cost) ;
 		});
@@ -57,4 +57,5 @@ void AStar::Search()
 			save.push_back(make_pair(cost, tBoard));
 		}
 	}
+	cout << "검색 실패하였습니다." << endl;
 }

@@ -6,9 +6,9 @@ using namespace std;
 
 struct Cost
 {
-	int m_hCost;
-	int m_gCost;
-	int m_Cost;
+	int m_hCost; //ÄýÀÇ °¹¼ö
+	int m_gCost; //Ãæµ¹ È½¼ö
+	int m_Cost;   //ÃÑ ÄÚ½ºÆ®
 
 	Cost(int h, int g) {
 		m_hCost = h;

@@ -39,9 +39,13 @@ int main(void)
 			cout << "다시 입력하시요" << endl;
 	}
 	cout << endl;
+
+	DWORD preTime = timeGetTime();
+	DWORD currTIme = -1;
 	if (option == OPTION::ASTAR) {
 		AStar aStar(num);
 		aStar.Search();
+		currTIme = timeGetTime();
 	}
 		
 	else {
@@ -54,7 +58,10 @@ int main(void)
 
 		HillClimbing hill(&board, num, option);
 		hill.Search();
+		currTIme = timeGetTime();
 	}
+
+	cout << "소요시간 : " << (currTIme - preTime)*0.001 << "sec"<<std::endl;
 
 	return 0;
 }

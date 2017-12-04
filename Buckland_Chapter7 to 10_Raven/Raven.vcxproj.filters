@@ -399,9 +399,6 @@
     <ClInclude Include="goals\Goal_Wander.h">
       <Filter>AI\goals\atomic</Filter>
     </ClInclude>
-    <ClInclude Include="..\Common\Graph\AStarHeuristicPolicies.h">
-      <Filter>AI\Movement &amp; Navigation</Filter>
-    </ClInclude>
     <ClInclude Include="..\Common\misc\CellSpacePartition.h">
       <Filter>AI\Movement &amp; Navigation</Filter>
     </ClInclude>
@@ -608,6 +605,9 @@
     </ClInclude>
     <ClInclude Include="Common\script\Scriptor.h">
       <Filter>Game\Script related\general</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\Graph\AStarHeuristicPolicies.h">
+      <Filter>AI\Movement &amp; Navigation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

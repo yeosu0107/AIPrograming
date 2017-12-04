@@ -81,6 +81,10 @@ bool Goal_Explore::HandleMessage(const Telegram& msg)
 
       return true; //msg handled
 
+	case Msg_PathFinding:
+		AddSubgoal(new Goal_FollowPath(m_pOwner,
+			m_pOwner->GetPathPlanner()->GetPath()));
+		return true;
     default: return false;
     }
   }

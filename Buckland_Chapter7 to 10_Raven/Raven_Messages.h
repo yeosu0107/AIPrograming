@@ -15,6 +15,7 @@ enum message_type
   Msg_Blank,
   Msg_PathReady,
   Msg_NoPathAvailable,
+  Msg_PathFinding,
   Msg_TakeThatMF, 
   Msg_YouGotMeYouSOB,
   Msg_GoalQueueEmpty,
@@ -35,6 +36,10 @@ inline std::string MessageToString(int msg)
   case Msg_NoPathAvailable:
 
     return "Msg_NoPathAvailable";
+
+  case Msg_PathFinding:
+
+	  return "Msg_PathFinding";
 
   case Msg_TakeThatMF:
 

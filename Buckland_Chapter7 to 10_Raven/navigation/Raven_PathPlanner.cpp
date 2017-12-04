@@ -248,6 +248,8 @@ int Raven_PathPlanner::CycleOnce()const
 {
   assert (m_pCurrentSearch && "<Raven_PathPlanner::CycleOnce>: No search object instantiated");
 
+  //두번째
+  //한번에 사이클에서 타겟 검색
   int result = m_pCurrentSearch->CycleOnce();
 
   //let the bot know of the failure to find a path
@@ -269,7 +271,7 @@ int Raven_PathPlanner::CycleOnce()const
     //to the trigger in the extra info field of the message. (The pointer
     //will just be NULL if no trigger)
     void* pTrigger = 
-    m_NavGraph.GetNode(m_pCurrentSearch->GetPathToTarget().back()).ExtraInfo();
+    m_NavGraph.GetNode(m_pCurrentSearch->GetPathToTarget().back()).ExtraInfo(); //타겟을 찾으면 해당 노드를 반환
 
     Dispatcher->DispatchMsg(SEND_MSG_IMMEDIATELY,
                             SENDER_ID_IRRELEVANT,
@@ -277,7 +279,17 @@ int Raven_PathPlanner::CycleOnce()const
                             Msg_PathReady,
                             pTrigger);
   }
+  else if (result == search_incomplete) {
+	  void *pTrigger = 
+	  m_NavGraph.GetNode(m_pCurrentSearch->GetPathToTarget().back()).ExtraInfo(); 
+	  //타겟을 찾지 못해도 현재 노드 중 제일 좋은 노드를 반환
 
+	  Dispatcher->DispatchMsg(SEND_MSG_IMMEDIATELY,
+		  SENDER_ID_IRRELEVANT,
+		  m_pOwner->ID(),
+		  Msg_PathFinding,
+		  pTrigger);
+  }
   return result;
 }
 
@@ -435,10 +447,11 @@ bool Raven_PathPlanner::RequestPathToItem(unsigned int ItemType)
   //create an instance of the search algorithm
   typedef FindActiveTrigger<Trigger<Raven_Bot> > t_con; 
   typedef Graph_SearchDijkstras_TS<Raven_Map::NavGraph, t_con> DijSearch;
-  
+
   m_pCurrentSearch = new DijSearch(m_NavGraph,
                                    ClosestNodeToBot,
                                    ItemType);  
+ 
 
   //register the search with the path manager
   m_pOwner->GetWorld()->GetPathManager()->Register(this);

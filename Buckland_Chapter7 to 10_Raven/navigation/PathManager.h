@@ -69,6 +69,8 @@ inline void PathManager<path_planner>::UpdateSearches()
   while (NumCyclesRemaining-- && !m_SearchRequests.empty())
   {
     //make one search cycle of this path request
+	  //첫번째
+	  //허용된 자원 (남아있는 사이클) 만큼 for루프 안에서 타겟 검색 수행
     int result = (*curPath)->CycleOnce();
 
     //if the search has terminated remove from the list

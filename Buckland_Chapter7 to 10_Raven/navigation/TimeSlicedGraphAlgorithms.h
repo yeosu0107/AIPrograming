@@ -162,6 +162,8 @@ public:
 template <class graph_type, class heuristic>
 int Graph_SearchAStar_TS<graph_type, heuristic>::CycleOnce()
 {
+	//세번째
+	//실제 검색을 수행
   //if the PQ is empty the target has not been found
   if (m_pPQ->empty())
   {

@@ -21,7 +21,8 @@ enum message_type
   Msg_GoalQueueEmpty,
   Msg_OpenSesame,
   Msg_GunshotSound,
-  Msg_UserHasRemovedBot
+  Msg_UserHasRemovedBot,
+  Msg_SuccessedAttack		// 성공적으로 공격을 끝냈는가에 대한 메시지
 };
 
 //used for outputting debug info

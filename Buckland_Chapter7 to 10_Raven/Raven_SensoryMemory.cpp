@@ -20,9 +20,11 @@ void Raven_SensoryMemory::MakeNewRecordIfNotAlreadyPresent(Raven_Bot* pOpponent)
   //create a new record
   if (m_MemoryMap.find(pOpponent) == m_MemoryMap.end())
   {
-    m_MemoryMap[pOpponent] = MemoryRecord();
+    m_MemoryMap[pOpponent] = MemoryRecord();	// 없을 경우 새로 봇을추가 
   }
 }
+
+
 
 //------------------------ RemoveBotFromMemory --------------------------------
 //
@@ -132,6 +134,20 @@ void Raven_SensoryMemory::UpdateVision()
       }
     }
   }//next bot
+}
+
+void Raven_SensoryMemory::SucceessedTargetHit(int nBotID, int nDamage)
+{
+	std::list<Raven_Bot*> bots = m_pOwner->GetWorld()->GetAllBots();
+	std::list<Raven_Bot*>::const_iterator curBot;
+
+	for (curBot = bots.begin(); curBot != bots.end(); ++curBot)
+	{
+		if ((*curBot)->ID() == nBotID) {
+			m_MemoryMap[*curBot].nHittedDamage += nDamage;
+			break;
+		}
+	}
 }
 
 

@@ -217,6 +217,7 @@ bool Raven_Bot::isReadyForTriggerUpdate()const
 //-----------------------------------------------------------------------------
 bool Raven_Bot::HandleMessage(const Telegram& msg)
 {
+	int nDamage;
   //first see if the current goal accepts the message
   if (GetBrain()->HandleMessage(msg)) return true;
  
@@ -229,14 +230,22 @@ bool Raven_Bot::HandleMessage(const Telegram& msg)
     if (isDead() || isSpawning()) return true;
 
     //the extra info field of the telegram carries the amount of damage
-    ReduceHealth(DereferenceToType<int>(msg.ExtraInfo));
 
+	nDamage = DereferenceToType<int>(msg.ExtraInfo);
+    ReduceHealth(nDamage);
+	
+	Dispatcher->DispatchMsg(SEND_MSG_IMMEDIATELY,
+		ID(),			// ¸ÂÀº ³à¼®ÀÇ ID
+		msg.Sender,		// ½ð ³à¼®ÀÇ ID
+		Msg_SuccessedAttack,
+		(void*)&nDamage);
+	
     //if this bot is now dead let the shooter know
     if (isDead())
     {
       Dispatcher->DispatchMsg(SEND_MSG_IMMEDIATELY,
-                              ID(),
-                              msg.Sender,
+                              ID(),			// ¸ÂÀº ³à¼®ÀÇ ID
+                              msg.Sender,	// ½ð ³à¼®ÀÇ ID
                               Msg_YouGotMeYouSOB,
                               NO_ADDITIONAL_INFO);
     }
@@ -247,9 +256,10 @@ bool Raven_Bot::HandleMessage(const Telegram& msg)
     
     IncrementScore();
     
+	GetSensoryMem()->GetMemoryMap()[m_pTargSys->GetTarget()].nHittedDamage = 0;	// ÀûÀÌ Á×Àº °æ¿ì Àû¿¡°Ô ÀÔÈù ÇÇÇØ·® ÃÊ±âÈ­
     //the bot this bot has just killed should be removed as the target
-    m_pTargSys->ClearTarget();
-
+    m_pTargSys->ClearTarget();	// »ó´ë¹æÀÌ Á×À¸¸é Å¸°Ù¸¦ ÃÊ±âÈ­
+	
     return true;
 
   case Msg_GunshotSound:
@@ -274,6 +284,11 @@ bool Raven_Bot::HandleMessage(const Telegram& msg)
 
       return true;
     }
+  case Msg_SuccessedAttack:
+  {
+	  m_pSensoryMem->SucceessedTargetHit(msg.Sender, DereferenceToType<int>(msg.ExtraInfo));
+	  return true;
+  }
 
 
   default: return false;

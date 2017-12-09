@@ -61,6 +61,7 @@ public:
 template <class path_planner>
 inline void PathManager<path_planner>::UpdateSearches()
 {
+	bool incomplete = false;
   int NumCyclesRemaining = m_iNumSearchCyclesPerUpdate;
 
   //iterate through the search requests until either all requests have been
@@ -71,7 +72,10 @@ inline void PathManager<path_planner>::UpdateSearches()
     //make one search cycle of this path request
 	  //첫번째
 	  //허용된 자원 (남아있는 사이클) 만큼 for루프 안에서 타겟 검색 수행
-    int result = (*curPath)->CycleOnce();
+	  if (NumCyclesRemaining <= 0)
+		  incomplete = true;
+
+    int result = (*curPath)->CycleOnce(incomplete);
 
     //if the search has terminated remove from the list
     if ( (result == target_found) || (result == target_not_found) )

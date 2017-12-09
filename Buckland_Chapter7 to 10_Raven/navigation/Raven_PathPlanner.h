@@ -102,7 +102,7 @@ public:
   //of the currently assigned search algorithm. When a search is terminated
   //the method messages the owner with either the msg_NoPathAvailable or
   //msg_PathReady messages
-  int        CycleOnce()const;
+  int        CycleOnce(bool result)const;
 
   Vector2D   GetDestination()const{return m_vDestinationPos;}
   void       SetDestination(Vector2D NewPos){m_vDestinationPos = NewPos;}

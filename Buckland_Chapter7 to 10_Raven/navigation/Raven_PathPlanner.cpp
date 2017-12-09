@@ -244,7 +244,7 @@ void Raven_PathPlanner::SmoothPathEdgesPrecise(Path& path)
 //  the path manager calls this to iterate once though the search cycle
 //  of the currently assigned search algorithm.
 //-----------------------------------------------------------------------------
-int Raven_PathPlanner::CycleOnce()const
+int Raven_PathPlanner::CycleOnce(bool incomplete)const
 {
   assert (m_pCurrentSearch && "<Raven_PathPlanner::CycleOnce>: No search object instantiated");
 
@@ -279,7 +279,7 @@ int Raven_PathPlanner::CycleOnce()const
                             Msg_PathReady,
                             pTrigger);
   }
-  else if (result == search_incomplete) {
+  else if (result == search_incomplete && incomplete) {
 	  void *pTrigger = 
 	  m_NavGraph.GetNode(m_pCurrentSearch->GetPathToTarget().back()).ExtraInfo(); 
 	  //타겟을 찾지 못해도 현재 노드 중 제일 좋은 노드를 반환

@@ -111,6 +111,7 @@ public:
 	double    GetTimeSinceLastSensed(Raven_Bot* pOpponent)const;
 	double    GetTimeOpponentHasBeenOutOfView(Raven_Bot* pOpponent)const;
 	MemoryMap GetMemoryMap() const { return m_MemoryMap; }
+	void ResetMemory(int id);
 	//this method returns a list of all the opponents that have had their
 	//records updated within the last m_dMemorySpan seconds.
 	std::list<Raven_Bot*> GetListOfRecentlySensedOpponents()const;

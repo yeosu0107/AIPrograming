@@ -36,7 +36,7 @@ void Raven_TargetingSystem::Update()
 		//make sure the bot is alive and that it is not the owner
 		if ((*curBot)->isAlive() && (*curBot != m_pOwner))
 		{
-			double dist = Vec2DDistanceSq((*curBot)->Pos(), m_pOwner->Pos()) / 1000.0;
+			double dist = Vec2DDistanceSq((*curBot)->Pos(), m_pOwner->Pos()) / 100.0;
 			MemoryHitDamage = (*curBot)->GetMaxHealth() - SeneoryMemorys[*curBot].nHittedDamage;
 
 			if (ScoreNTarget.first > (double)MemoryHitDamage + dist)

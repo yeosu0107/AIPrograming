@@ -256,7 +256,7 @@ bool Raven_Bot::HandleMessage(const Telegram& msg)
     
     IncrementScore();
     
-	GetSensoryMem()->GetMemoryMap()[m_pTargSys->GetTarget()].nHittedDamage = 0;	// 적이 죽은 경우 적에게 입힌 피해량 초기화
+	GetSensoryMem()->ResetMemory(msg.Sender);	// 적이 죽은 경우 적에게 입힌 피해량 초기화
     //the bot this bot has just killed should be removed as the target
     m_pTargSys->ClearTarget();	// 상대방이 죽으면 타겟를 초기화
 	

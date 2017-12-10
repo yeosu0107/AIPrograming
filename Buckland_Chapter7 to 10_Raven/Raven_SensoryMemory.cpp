@@ -258,6 +258,20 @@ double Raven_SensoryMemory::GetTimeOpponentHasBeenOutOfView(Raven_Bot* pOpponent
   return MaxDouble;
 }
 
+void Raven_SensoryMemory::ResetMemory(int id)
+{
+	std::list<Raven_Bot*> bots = m_pOwner->GetWorld()->GetAllBots();
+	std::list<Raven_Bot*>::const_iterator curBot;
+
+	for (curBot = bots.begin(); curBot != bots.end(); ++curBot)
+	{
+		if ((*curBot)->ID() == id) {
+			m_MemoryMap[*curBot].nHittedDamage = 0;
+			break;
+		}
+	}
+}
+
 //------------------------ GetTimeSinceLastSensed ----------------------
 //
 //  returns the amount of time the given bot has been visible

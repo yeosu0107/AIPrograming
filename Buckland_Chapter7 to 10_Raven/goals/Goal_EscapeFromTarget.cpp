@@ -33,7 +33,8 @@ void Goal_EscapeFromTarget::Activate()
 	}
 
 	//AddSubgoal(new Goal_MoveToPosition(m_pOwner, m_pOwner->Pos() - m_vector));
-	AddSubgoal(new Goal_SeekToPosition(m_pOwner, m_pOwner->Pos() - m_vector));
+	if(m_pOwner->canWalkTo(m_pOwner->Pos() - m_vector))
+		AddSubgoal(new Goal_SeekToPosition(m_pOwner, m_pOwner->Pos() - m_vector));
 	//AddSubgoal(new Goal_GetItem(m_pOwner, type_health));
 }
 

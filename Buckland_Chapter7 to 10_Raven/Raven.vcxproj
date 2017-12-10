@@ -240,11 +240,13 @@
     <ClCompile Include="Common\Time\PrecisionTimer.cpp" />
     <ClCompile Include="goals\AttackTargetGoal_Evaluator.cpp" />
     <ClCompile Include="goals\ExploreGoal_Evaluator.cpp" />
+    <ClCompile Include="goals\GetEscapeGoal_Evaluator.cpp" />
     <ClCompile Include="goals\GetHealthGoal_Evaluator.cpp" />
     <ClCompile Include="goals\GetWeaponGoal_Evaluator.cpp" />
     <ClCompile Include="goals\Goal_AdjustRange.cpp" />
     <ClCompile Include="goals\Goal_AttackTarget.cpp" />
     <ClCompile Include="goals\Goal_DodgeSideToSide.cpp" />
+    <ClCompile Include="goals\Goal_EscapeFromTarget.cpp" />
     <ClCompile Include="goals\Goal_Explore.cpp" />
     <ClCompile Include="goals\Goal_FollowPath.cpp" />
     <ClCompile Include="goals\Goal_GetItem.cpp" />
@@ -347,11 +349,13 @@
     <ClInclude Include="constants.h" />
     <ClInclude Include="goals\AttackTargetGoal_Evaluator.h" />
     <ClInclude Include="goals\ExploreGoal_Evaluator.h" />
+    <ClInclude Include="goals\GetEscapeGoal_Evaluator.h" />
     <ClInclude Include="goals\GetHealthGoal_Evaluator.h" />
     <ClInclude Include="goals\GetWeaponGoal_Evaluator.h" />
     <ClInclude Include="goals\Goal_AdjustRange.h" />
     <ClInclude Include="goals\Goal_AttackTarget.h" />
     <ClInclude Include="goals\Goal_DodgeSideToSide.h" />
+    <ClInclude Include="goals\Goal_EscapeFromTarget.h" />
     <ClInclude Include="goals\Goal_Evaluator.h" />
     <ClInclude Include="goals\Goal_Explore.h" />
     <ClInclude Include="goals\Goal_FollowPath.h" />

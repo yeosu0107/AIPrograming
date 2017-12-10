@@ -83,6 +83,10 @@ std::string GoalTypeToString::Convert(int gt)
 
     return "say_phrase";
 
+  case goal_escape_from_target:
+
+	  return "escape_from_target";
+
   default:
 
     return "UNKNOWN GOAL TYPE!";

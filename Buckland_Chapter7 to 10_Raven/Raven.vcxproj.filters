@@ -268,6 +268,12 @@
     <ClCompile Include="Common\Messaging\MessageDispatcher.cpp">
       <Filter>AI\Messaging</Filter>
     </ClCompile>
+    <ClCompile Include="goals\GetEscapeGoal_Evaluator.cpp">
+      <Filter>AI\goals\goal evaluation</Filter>
+    </ClCompile>
+    <ClCompile Include="goals\Goal_EscapeFromTarget.cpp">
+      <Filter>AI\goals\composite</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Raven_Bot.h">
@@ -608,6 +614,12 @@
     </ClInclude>
     <ClInclude Include="Common\Graph\AStarHeuristicPolicies.h">
       <Filter>AI\Movement &amp; Navigation</Filter>
+    </ClInclude>
+    <ClInclude Include="goals\GetEscapeGoal_Evaluator.h">
+      <Filter>AI\goals\goal evaluation</Filter>
+    </ClInclude>
+    <ClInclude Include="goals\Goal_EscapeFromTarget.h">
+      <Filter>AI\goals\composite</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
